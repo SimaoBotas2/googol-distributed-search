@@ -1,12 +1,14 @@
-package search;
+package downloader;
 
+
+import barrel.Index;
 import java.rmi.registry.*;
 import java.util.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 
-public class Robot {
+public class Downloader {
     public static void main(String[] args) {
         try {
             Index index = (Index) LocateRegistry.getRegistry(8183).lookup("index");
