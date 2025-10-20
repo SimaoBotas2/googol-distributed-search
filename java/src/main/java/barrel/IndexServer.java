@@ -5,6 +5,11 @@ import java.rmi.server.*;
 import java.rmi.registry.*;
 import java.util.*;
 
+
+//Log no terminal para ajudar no debugging
+
+
+
 public class IndexServer extends UnicastRemoteObject implements Index {
     private Queue<String> urlsToIndex;
     private HashMap<String, List<String>> indexedItems;
