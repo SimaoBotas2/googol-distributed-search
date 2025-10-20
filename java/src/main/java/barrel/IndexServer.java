@@ -3,20 +3,18 @@ package barrel;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
-import java.util.concurrent.*;
-import java.io.*;
 import java.util.*;
 
 public class IndexServer extends UnicastRemoteObject implements Index {
-    private ArrayList<String> urlsToIndex;
+    private Queue<String> urlsToIndex;
     private HashMap<String, List<String>> indexedItems;
 
     public IndexServer() throws RemoteException {
         super();
-        // Queue of URLs to index
-        urlsToIndex = new ArrayList<String>();       
-        // Inverted index: word -> list of URLs
+        urlsToIndex = new LinkedList<>();
+
         indexedItems = new HashMap<>();
+        System.out.println("[IndexServer] Servidor iniciado e pronto para receber pedidos.");
     }
 
     public static void main(String args[]) {
@@ -24,53 +22,28 @@ public class IndexServer extends UnicastRemoteObject implements Index {
             IndexServer server = new IndexServer();
             Registry registry = LocateRegistry.createRegistry(8183);
             registry.rebind("index", server);
-            System.out.println("Server ready. Waiting for input...");
-
-            // Rudimentary console interface
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                System.out.println("Choose an option: 1) Add URL  2) Search word  3) Exit");
-                String option = scanner.nextLine();
-                if (option.equals("1")) {
-                    System.out.print("Enter URL: ");
-                    String url = scanner.nextLine();
-                    server.putNew(url);
-                    System.out.println("URL added to queue.");
-                } else if (option.equals("2")) {
-                    System.out.print("Enter word to search: ");
-                    String word = scanner.nextLine().toLowerCase();
-                    List<String> results = server.searchWord(word);
-                    System.out.println("Found in URLs:");
-                    for (String u : results) {
-                        System.out.println(u);
-                    }
-                } else if (option.equals("3")) {
-                    System.out.println("Exiting...");
-                    break;
-                } else {
-                    System.out.println("Invalid option.");
-                }
-            }
-            scanner.close();
+            System.out.println("[IndexServer] Registry criado na porta 8183 e objeto 'index' registado.");
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
-    private long counter = 0, timestamp = System.currentTimeMillis();
-
     public String takeNext() throws RemoteException {
         synchronized (urlsToIndex) {
-            if (urlsToIndex.isEmpty()) {
-                return null;
+            String next = urlsToIndex.poll();
+            if (next != null) {
+                System.out.println("[IndexServer] takeNext -> " + next);
+            } else {
+                System.out.println("[IndexServer] takeNext -> fila vazia");
             }
-            return urlsToIndex.remove(0);
+            return next;
         }
     }
 
     public void putNew(String url) throws RemoteException {
         synchronized (urlsToIndex) {
             urlsToIndex.add(url);
+            System.out.println("[IndexServer] putNew -> URL adicionada à fila: " + url);
         }
     }
 
@@ -81,6 +54,7 @@ public class IndexServer extends UnicastRemoteObject implements Index {
             List<String> urls = indexedItems.get(word);
             if (!urls.contains(url)) {
                 urls.add(url);
+                System.out.println("[IndexServer] addToIndex -> '" + word + "' → " + url);
             }
         }
     }
@@ -88,10 +62,9 @@ public class IndexServer extends UnicastRemoteObject implements Index {
     public List<String> searchWord(String word) throws RemoteException {
         synchronized (indexedItems) {
             word = word.toLowerCase();
-            if (indexedItems.containsKey(word)) {
-                return new ArrayList<>(indexedItems.get(word));
-            }
-            return new ArrayList<>();
+            List<String> results = indexedItems.getOrDefault(word, new ArrayList<>());
+            System.out.println("[IndexServer] searchWord -> '" + word + "' (" + results.size() + " resultados)");
+            return new ArrayList<>(results);
         }
     }
 }

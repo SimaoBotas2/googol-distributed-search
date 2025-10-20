@@ -1,0 +1,2 @@
+gateway - 8184
+indexServer - 8183

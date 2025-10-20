@@ -9,33 +9,36 @@ import java.util.*;
 public class Gateway extends UnicastRemoteObject implements GatewayInterface {
     private List<Index> barrels;
 
-    public Gateway() throws RemoteException {
-        super();
-        barrels = new ArrayList<>();
-        try {
-            // Simulando 1 storage Barrels no mesmo host, portas diferentes
-            barrels.add((Index) LocateRegistry.getRegistry(8183).lookup("index"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+public Gateway() throws RemoteException {
+    super();
+    barrels = new ArrayList<>();
+    try {
+        // Simulando 1 Storage Barrel
+        Registry registry = LocateRegistry.getRegistry("localhost", 8183);
+        Index barrel = (Index) registry.lookup("index");
+        barrels.add(barrel);
+        System.out.println("Conectado ao barrel na porta 8183"); // depois meter isto de acordo com a porta certa
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+
 
     // Escolhe um Barrel aleatório
-    // Temporary for testing
+    // Temporary for testing pq só tenho 1
     private Index chooseBarrel() {
         Random rand = new Random();
         return barrels.get(rand.nextInt(barrels.size()));
     }
 
     // Adiciona URL para indexação
-    // Temporary for testing, dps meter isto para a queue, ou talvez aqui a queue
     public void addUrl(String url) {
         Index barrel = chooseBarrel();
         try {
             barrel.putNew(url);
-            System.out.println("URL sent to Barrel for indexing: " + url);
+            System.out.println("URL enviado ao Barrel para indexação: " + url);
         } catch (Exception e) {
-            System.err.println("Failed to add URL: " + e.getMessage());
+            System.err.println("Falha ao adicionar o URL: " + e.getMessage());
         }
     }
 
@@ -45,7 +48,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         try {
             return barrel.searchWord(word);
         } catch (Exception e) {
-            System.err.println("Failed to search word: " + e.getMessage());
+            System.err.println("Falha ao procurar a palavra: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -60,5 +63,5 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         catch (RemoteException e){
             e.printStackTrace();
         }
-    }
+      }
 }
