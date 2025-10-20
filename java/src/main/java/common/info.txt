@@ -1,2 +1,4 @@
 gateway - 8184
 indexServer - 8183
+
+TODO : ver números de portas que posso usar e reservar para os index barrels

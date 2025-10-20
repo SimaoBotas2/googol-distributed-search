@@ -2,7 +2,6 @@ package downloader;
 
 import barrel.Index;
 import java.rmi.registry.*;
-import java.util.*;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
