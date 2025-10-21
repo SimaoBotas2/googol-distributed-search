@@ -8,23 +8,21 @@ import java.util.*;
 
 //Log no terminal para ajudar no debugging
 
-
-
-public class IndexServer extends UnicastRemoteObject implements Index {
+public class IndexBarrel extends UnicastRemoteObject implements Index {
     private Queue<String> urlsToIndex;
     private HashMap<String, List<String>> indexedItems;
 
-    public IndexServer() throws RemoteException {
+    public IndexBarrel() throws RemoteException {
         super();
         urlsToIndex = new LinkedList<>();
-
+  
         indexedItems = new HashMap<>();
         System.out.println("[IndexServer] Servidor iniciado e pronto para receber pedidos.");
     }
 
     public static void main(String args[]) {
         try {
-            IndexServer server = new IndexServer();
+            IndexBarrel server = new IndexBarrel();
             Registry registry = LocateRegistry.createRegistry(8183);
             registry.rebind("index", server);
             System.out.println("[IndexServer] Registry criado na porta 8183 e objeto 'index' registado.");

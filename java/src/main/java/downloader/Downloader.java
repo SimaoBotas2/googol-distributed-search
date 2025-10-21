@@ -9,6 +9,10 @@ import org.jsoup.select.*;
 public class Downloader {
     public static void main(String[] args) {
         try {
+
+            //TODO mudar isto para conectar a todos os ativos (pelo config file)
+            // Talvez meter um check dentro do while true se o barrel ainda ta vivo para ter redundância,
+            // Se nenhum estiver vivo, avisar no terminal e kill?
             Registry registry = LocateRegistry.getRegistry("localhost", 8183);
             Index index = (Index) registry.lookup("index");
             System.out.println("Connectado ao Index Barrel na porta 8183"); //temporario para testes, depois vai ter vários

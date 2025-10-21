@@ -13,7 +13,7 @@ public Gateway() throws RemoteException {
     super();
     barrels = new ArrayList<>();
     try {
-        // Simulando 1 Storage Barrel
+        // A simular 1 por agora
         Registry registry = LocateRegistry.getRegistry("localhost", 8183);
         Index barrel = (Index) registry.lookup("index");
         barrels.add(barrel);
@@ -22,7 +22,6 @@ public Gateway() throws RemoteException {
         e.printStackTrace();
     }
 }
-
 
     // Escolhe um Barrel aleatório
     // Temporary for testing pq só tenho 1
