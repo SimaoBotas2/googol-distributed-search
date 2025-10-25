@@ -1,2 +1,4 @@
-gateway - 8184
-indexServer - 8183
+gateway - 8185
+indexServer1 - 8183
+indexServer2 - 8184
+indexmanager - 8182

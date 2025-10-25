@@ -1,0 +1,5 @@
+#Documento para colocar as ports dos barrels, usar # para coment
+#indexServer1
+8183
+#indexServer2
+8184
