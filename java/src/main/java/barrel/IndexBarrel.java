@@ -1,6 +1,8 @@
 package barrel;
 
 import java.rmi.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.*;
 import java.util.*;
 
@@ -8,6 +10,24 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
 
     private final Queue<String> urlsToIndex;
     private final HashMap<String, List<String>> indexedItems;
+
+
+    public static void main(String[] args) {
+        try {
+            int port = 8183; // valor por defeito
+            if (args.length > 0) {
+                port = Integer.parseInt(args[0]);
+            }
+
+            IndexBarrel barrel = new IndexBarrel();
+            Registry registry = LocateRegistry.createRegistry(port);
+            registry.rebind("index", barrel);
+            System.out.println("[IndexBarrel] Registry criado na porta " + port + " e objeto 'index' registado.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public IndexBarrel() throws RemoteException {
         super();
@@ -55,6 +75,11 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
     public synchronized Map<String, List<String>> getIndexSnapshot() throws RemoteException {
         // devolve uma cópia do conteudo do barrel, funcao para debugging
         return new HashMap<>(indexedItems);
+    }
+
+    @Override
+    public boolean ping() throws RemoteException{
+        return true;
     }
 }
 

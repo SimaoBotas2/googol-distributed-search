@@ -11,7 +11,8 @@ import java.util.*;
 public class IndexManager extends UnicastRemoteObject implements Manager {
 
     private static final long serialVersionUID = 1L;
-    private final List<String> activeBarrels = new ArrayList<>();
+    private List<String> activeBarrels = new ArrayList<>();
+    private final boolean debug = true;
 
     public IndexManager() throws RemoteException {
         super();
@@ -54,12 +55,15 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
                     System.out.println("[IndexManager] Barrel criado na porta " + p);
                 } catch (ExportException ex) {
                     System.err.println("[IndexManager] Já existe um barrel na porta " + p);
+                    manager.activeBarrels.add("localhost:" + p); //adiciona na mesma, caso queiramos inicializar os barrels manualmente
                 } catch (RemoteException ex) {
                     System.err.println("[IndexManager] Erro ao criar barrel na porta " + p + ": " + ex.getMessage());
                 }
             }
 
             System.out.println("[IndexManager] Todos os barrels foram lançados!");
+
+            manager.startMonitoring(ports);
 
         } catch (RemoteException e) {
             System.err.println("[IndexManager] Erro ao iniciar Manager: " + e.getMessage());
@@ -71,4 +75,42 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
     public List<String> getActiveBarrels() throws RemoteException {
         return new ArrayList<>(activeBarrels);
     }
+
+   private void startMonitoring(List<Integer> ports) {
+    new Thread(() -> {
+        while (true) {
+            for (int port : ports) {
+                String id = "localhost:" + port;
+                boolean alive = false;
+
+                try {
+                    Registry reg = LocateRegistry.getRegistry("localhost", port);
+                    Index barrel = (Index) reg.lookup("index");
+                    alive = barrel.ping();
+                } catch (Exception ignored) {
+                    alive = false;
+                }
+
+                synchronized (activeBarrels) {
+                    boolean present = activeBarrels.contains(id);
+
+                    if (alive) {
+                        if (!present) {
+                            activeBarrels.add(id);
+                            if (debug) System.out.println("[Monitor] Barrel reativado na porta " + port);
+                        }
+                    } else {
+                        if (present) {
+                            activeBarrels.remove(id);
+                            System.err.println("[Monitor] Barrel desconectado da porta " + port);
+                        }
+                    }
+                }
+            }
+
+            try { Thread.sleep(5000); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+        }
+    }, "manager-monitor").start();
+}
 }

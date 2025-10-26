@@ -14,6 +14,8 @@ public interface Index extends Remote {
 
     public List<String> searchWord(String word) throws java.rmi.RemoteException;
 
+    public boolean ping() throws RemoteException;
+
     //para debugging
     public Map<String, List<String>> getIndexSnapshot() throws RemoteException;
 

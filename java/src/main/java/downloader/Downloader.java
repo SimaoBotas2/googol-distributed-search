@@ -11,7 +11,7 @@ import org.jsoup.select.*;
 public class Downloader {
     public static void main(String[] args) {
         try {
-            // Conectar ao IndexManager (porta fixa 8182, por agora)
+            // Conectar ao IndexManager (porta fixa 8182, por agora )
             Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
             Manager manager = (Manager) regManager.lookup("manager");
 
@@ -43,8 +43,16 @@ public class Downloader {
             //Ciclo principal
             while (true) {
                 String url = null;
+                // Atualiza lista de barrels antes de pedir nova URL
+                barrels = atualizarBarrels(manager);
 
-                // failover: tenta obter URL de qualquer Barrel
+                if (barrels.isEmpty()) {
+                    System.out.println("[Downloader] Nenhum Barrel ativo. A espera...");
+                    Thread.sleep(2000);
+                    continue;
+                }
+
+                // Tenta obter URL de qualquer Barrel ativo
                 for (Index b : barrels) {
                     try {
                         url = b.takeNext();
@@ -56,7 +64,7 @@ public class Downloader {
                 }
 
                 if (url == null) {
-                    System.out.println("Sem URLs para indexar. À espera...");
+                    System.out.println("Sem URLs para indexar. A espera...");
                     Thread.sleep(2000);
                     continue;
                 }
@@ -69,7 +77,7 @@ public class Downloader {
                     String bodyText = doc.body().text();
                     String[] words = bodyText.split("\\s+");
 
-                    System.out.println("A indexar página: " + title);
+                    System.out.println("A indexar pagina: " + title);
 
                     //Enviar palavras para todos os Barrels (broadcast simples)
                     for (String word : words) {
@@ -112,4 +120,31 @@ public class Downloader {
             e.printStackTrace();
         }
     }
+
+
+private static List<Index> atualizarBarrels(Manager manager) {
+    List<Index> ativos = new ArrayList<>();
+    try {
+        List<String> infoList = manager.getActiveBarrels();
+        for (String info : infoList) {
+            try {
+                String[] parts = info.split(":");
+                String host = parts[0];
+                int port = Integer.parseInt(parts[1]);
+                Registry reg = LocateRegistry.getRegistry(host, port);
+                Index idx = (Index) reg.lookup("index");
+                ativos.add(idx);
+            } catch (Exception e) {
+                System.err.println("[Downloader] Falha ao conectar a " + info + ": " + e.getMessage());
+            }
+        }
+    } catch (Exception e) {
+        System.err.println("[Downloader] Erro ao obter lista de Barrels: " + e.getMessage());
+    }
+    return ativos;
+}
+
+
+
+
 }
