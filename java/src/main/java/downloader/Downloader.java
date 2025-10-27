@@ -64,7 +64,7 @@ public class Downloader {
                 }
 
                 if (url == null) {
-                    System.out.println("Sem URLs para indexar. A espera...");
+                    System.out.println("[Downloader] Sem URLs para indexar. A espera...");
                     Thread.sleep(2000);
                     continue;
                 }
@@ -72,13 +72,14 @@ public class Downloader {
                 System.out.println("A processar URL: " + url);
 
                 try {
-                    Document doc = Jsoup.connect(url).get();
+                    Document doc = Jsoup.connect(url).header("Accept-Charset","UTF-8").get(); //fazer isto para garantir que (quase) todos os caracteres sao lidos
+                    doc.outputSettings().charset("UTF-8");
                     String title = doc.title();
                     String bodyText = doc.body().text();
                     String[] words = bodyText.split("\\s+");
 
-                    System.out.println("A indexar pagina: " + title);
-
+                    System.out.println("[Downloader] A indexar pagina: " + title);
+ 
                     //Enviar palavras para todos os Barrels (broadcast simples)
                     for (String word : words) {
                         String w = word.trim().toLowerCase();
@@ -109,7 +110,7 @@ public class Downloader {
                     }
 
                 } catch (Exception e) {
-                    System.err.println("Erro ao processar " + url + ": " + e.getMessage());
+                    System.err.println("[Downloader] Erro ao processar " + url + ": " + e.getMessage());
                 }
 
                 Thread.sleep(500);
@@ -143,8 +144,4 @@ private static List<Index> atualizarBarrels(Manager manager) {
     }
     return ativos;
 }
-
-
-
-
 }
