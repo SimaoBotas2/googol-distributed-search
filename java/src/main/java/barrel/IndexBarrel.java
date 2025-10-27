@@ -8,8 +8,9 @@ import java.util.*;
 
 public class IndexBarrel extends UnicastRemoteObject implements Index {
 
-    private final Queue<String> urlsToIndex;
-    private final HashMap<String, List<String>> indexedItems;
+    private final Queue<String> urlsToIndex; //Url Queue
+    private final HashMap<String, List<String>> indexedItems; //palavras
+    private final Set<String> visitedUrls; //urls já visitados
 
 
     public static void main(String[] args) {
@@ -33,29 +34,50 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
         super();
         urlsToIndex = new LinkedList<>();
         indexedItems = new HashMap<>();
+        visitedUrls = new LinkedHashSet<>(); 
         System.out.println("[IndexBarrel] Barrel iniciado e pronto para receber pedidos.");
     }
 
     @Override
     public synchronized String takeNext() throws RemoteException {
-        String next = urlsToIndex.poll();
-        if (next != null)
-            System.out.println("[IndexBarrel] takeNext -> " + next);
-        else
-            System.out.println("[IndexBarrel] takeNext -> fila vazia");
-        return next;
+        while (!urlsToIndex.isEmpty()) {
+            String next = urlsToIndex.poll();
+            if (!visitedUrls.contains(next)) { 
+                System.out.println("[IndexBarrel] takeNext -> " + next);
+                return next;
+            } else {
+                System.out.println("[IndexBarrel] takeNext -> ignorado (já visitado): " + next);
+            }
+        }
+        return null;
     }
 
     @Override
     public synchronized void putNew(String url) throws RemoteException {
-        urlsToIndex.add(url);
+        String norm = normalizeUrl(url);
+        if(norm == null || norm.isEmpty())
+            return;
+        
+        if(visitedUrls.contains(norm)){
+            System.out.println("[IndexBarrel] putnew -> url já visitado:" + norm);
+            return;
+        }
+
+        if (urlsToIndex.contains(norm)) {
+        System.out.println("[IndexBarrel] putNew -> já na fila: " + norm);
+        return;
+        }
+
+        urlsToIndex.add(norm);
         System.out.println("[IndexBarrel] putNew -> URL adicionada à fila: " + url);
     }
 
     @Override
     public synchronized void addToIndex(String word, String url) throws RemoteException {
         word = word.toLowerCase();
+        visitedUrls.add(url);
         indexedItems.putIfAbsent(word, new ArrayList<>());
+        
         List<String> urls = indexedItems.get(word);
         if (!urls.contains(url)) {
             urls.add(url);
@@ -81,5 +103,15 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
     public boolean ping() throws RemoteException{
         return true;
     }
+
+    private String normalizeUrl(String url) {
+    if (url == null) return null;
+    url = url.trim();
+    int hashPos = url.indexOf('#');
+    if (hashPos != -1) url = url.substring(0, hashPos);
+    if (url.endsWith("/") && url.length() > 1) url = url.substring(0, url.length() - 1);
+    return url;
+    }
+
 }
 

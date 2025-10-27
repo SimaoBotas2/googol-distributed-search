@@ -39,7 +39,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
             }
 
             if (barrels.isEmpty()) {
-                System.err.println("[Gateway] Nenhum Barrel ativo — a Gateway não pode funcionar.");
+                System.err.println("[Gateway] Nenhum Barrel ativo a Gateway nao pode funcionar.");
             } else {
                 System.out.println("[Gateway] Total de Barrels conectados: " + barrels.size());
             }
@@ -60,7 +60,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         Index barrel = chooseBarrel();
         try {
             barrel.putNew(url);
-            System.out.println("[Gateway] URL enviada ao Barrel para indexação: " + url);
+            System.out.println("[Gateway] URL enviada ao Barrel para indexacao: " + url);
         } catch (Exception e) {
             System.err.println("[Gateway] Falha ao adicionar URL: " + e.getMessage());
         }

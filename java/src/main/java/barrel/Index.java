@@ -16,7 +16,7 @@ public interface Index extends Remote {
 
     public boolean ping() throws RemoteException;
 
-    //para debugging
+    //para debugging, imprime as estatisticas do barrel
     public Map<String, List<String>> getIndexSnapshot() throws RemoteException;
 
 }

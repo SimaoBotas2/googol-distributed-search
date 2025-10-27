@@ -18,31 +18,31 @@ public class Client {
             System.out.println("Bem-vindo/a ao cliente Googol!");
 
             while (true) {
-                System.out.println("\nEscolha uma opção:");
+                System.out.println("\n[Client] Escolha uma opcao:");
                 System.out.println("0) Sair");
                 System.out.println("1) Adicionar URL");
                 System.out.println("2) Procurar palavra");
-                System.out.println("3) [DEBUG] Verificar sincronização dos Barrels");
+                System.out.println("3) [DEBUG] Verificar sincronizacao dos Barrels");
 
                 String option = scanner.nextLine();
 
                 if (option.equals("0")) {
-                    System.out.println("A sair.");
+                    System.out.println("[Client] A sair.");
                     break;
                 }
                 else if (option.equals("1")) {
-                    System.out.print("Introduza URL para indexar: ");
+                    System.out.print("[Client] Introduza URL para indexar: ");
                     String url = scanner.nextLine();
                     gateway.addUrl(url);
 
                 } else if (option.equals("2")) {
-                    System.out.print("Introduza palavra para pesquisar: ");
+                    System.out.print("[Client] Introduza palavra para pesquisar: ");
                     String word = scanner.nextLine();
                     List<String> results = gateway.search(word);
                     if (results.isEmpty()) {
-                        System.out.println("Não houve resultados.");
+                        System.out.println("[Client] Nao houve resultados.");
                     } else {
-                        System.out.println("Encontrado nos URLs:");
+                        System.out.println("[Client] Encontrado nos URLs:");
                         for (String u : results) {
                             System.out.println(" - " + u);
                         }
@@ -64,10 +64,10 @@ public class Client {
                             Registry reg = LocateRegistry.getRegistry(host, port);
                             Index barrel = (Index) reg.lookup("index");
 
-                            Map<String, List<String>> snapshot = barrel.getIndexSnapshot();
+                            Map<String, List<String>> snapshot = barrel.getIndexSnapshot(); //devolve um hash map com as estatiscas
                             System.out.println("\n==== BARREL " + port + " ====");
                             System.out.println("Total de palavras indexadas: " + snapshot.size());
-                            snapshot.entrySet().stream()
+                            snapshot.entrySet().stream() //printamos as 10 primeiras palavras
                                     .limit(10)
                                     .forEach(e ->
                                         System.out.println(e.getKey() + " -> " + e.getValue()));
@@ -79,7 +79,7 @@ public class Client {
                     }
 
                 } else {
-                    System.out.println("Opção inválida, tente novamente.");
+                    System.out.println("[Client] Opção inválida, tente novamente.");
                 }
             }
 
