@@ -14,6 +14,8 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
 
 
     public static void main(String[] args) {
+        // TODO meter sincronia quando o barrel volta a vida, maybe manager is supposed to do that~
+        // TODO resolver problema de pq o barrel printa 100 vezes que o url ja foi visitado
         try {
             int port = 8183; // valor por defeito
             if (args.length > 0) {

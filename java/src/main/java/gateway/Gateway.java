@@ -37,7 +37,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                     System.err.println("[Gateway] Falha ao conectar ao Barrel " + info + ": " + ex.getMessage());
                 }
             }
-
+ 
             if (barrels.isEmpty()) {
                 System.err.println("[Gateway] Nenhum Barrel ativo a Gateway nao pode funcionar.");
             } else {

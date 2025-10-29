@@ -96,9 +96,15 @@ public class Downloader {
 
                     // Extrair links e adicionar à fila (broadcast)
                     Elements links = doc.select("a[href]");
+
+                    Set<String> alreadySeen = new HashSet<>(); //evitar que o downloader vejo os mesmos urls duas vezes
+
                     for (Element link : links) {
                         String absUrl = link.attr("abs:href");
-                        if (!absUrl.isEmpty()) {
+                        absUrl = limparUrl(absUrl);
+
+                        if (absUrl != null ||  !alreadySeen.contains(absUrl)) {
+                            alreadySeen.add(absUrl);
                             for (Index b : barrels) {
                                 try {
                                     b.putNew(absUrl);
@@ -109,7 +115,8 @@ public class Downloader {
                         }
                     }
 
-                } catch (Exception e) {
+                } 
+                catch (Exception e) {
                     System.err.println("[Downloader] Erro ao processar " + url + ": " + e.getMessage());
                 }
 
@@ -143,5 +150,17 @@ private static List<Index> atualizarBarrels(Manager manager) {
         System.err.println("[Downloader] Erro ao obter lista de Barrels: " + e.getMessage());
     }
     return ativos;
+}
+
+
+private static String limparUrl(String url){
+    if(url == null) return null;
+    //Urls que o downloader deve ignorar, pois nao possuem conteúdo
+    if(url.contains("?action") || url.contains("&oldid=") || url.contains("&printable") || url.contains("&veaction")){
+     return null;
+    }
+    
+    //se estiver limpa, retorna o url original
+    return url;
 }
 }
