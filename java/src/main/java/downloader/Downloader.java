@@ -10,6 +10,8 @@ import org.jsoup.select.*;
 
 public class Downloader {
     public static void main(String[] args) {
+
+        boolean debug = false; //para comentarios de debug
         try {
             // Conectar ao IndexManager (porta fixa 8182, por agora )
             Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
@@ -48,7 +50,7 @@ public class Downloader {
 
                 if (barrels.isEmpty()) {
                     System.out.println("[Downloader] Nenhum Barrel ativo. A espera...");
-                    Thread.sleep(2000);
+                    Thread.sleep(5000);
                     continue;
                 }
 
@@ -87,11 +89,16 @@ public class Downloader {
                             for (Index b : barrels) {
                                 try {
                                     b.addToIndex(w, url);
+                                    if(debug)
+                                    System.out.println("[DEBUG] Enviado para o barrel" + b);
                                 } catch (Exception e) {
                                     System.err.println("[Downloader] Falha ao enviar para Barrel: " + e.getMessage());
                                 }
                             }
+
                         }
+                        //coloquei aqui, can I?
+                        barrels = atualizarBarrels(manager);
                     }
 
                     // Extrair links e adicionar à fila (broadcast)
