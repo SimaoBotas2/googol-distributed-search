@@ -106,6 +106,59 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
         return true;
     }
 
+
+   @Override
+public synchronized List<String> searchAll(List<String> terms, int page, int pageSize) throws RemoteException {
+    if (terms == null || terms.isEmpty()) {
+        return Collections.singletonList("Nenhum termo introduzido.");
+    }
+
+    // conjunto de URLs que contêm todas as palavras (interseção AND)
+    Set<String> result = null;
+
+    for (String term : terms) {
+        if (term == null || term.isBlank()) continue;
+
+        term = term.toLowerCase();
+        List<String> urlsList = indexedItems.getOrDefault(term, Collections.emptyList());
+        Set<String> urls = new HashSet<>(urlsList); // converter lista -> conjunto
+
+        if (result == null) {
+            result = new HashSet<>(urls); // primeiro termo
+        } else {
+            result.retainAll(urls); // interseção
+        }
+
+        if (result.isEmpty()) break; // sem resultados possíveis
+    }
+
+    if (result == null || result.isEmpty()) {
+        return Collections.singletonList("Nenhum resultado encontrado.");
+    }
+
+    // ordenar alfabeticamente por URL (por agora)
+    List<String> urlsOrdenadas = new ArrayList<>(result);
+    Collections.sort(urlsOrdenadas);
+
+    // Paginação (10 resultados por página, por exemplo)
+    int from = Math.max(0, page * pageSize);
+    int to = Math.min(urlsOrdenadas.size(), from + pageSize);
+    if (from >= to) {
+        return Collections.singletonList("Página sem resultados.");
+    }
+
+    // Gerar lista de texto formatado
+    List<String> output = new ArrayList<>();
+    for (String u : urlsOrdenadas.subList(from, to)) {
+        output.add(u);
+    }
+
+    System.out.println("[IndexBarrel] searchAll -> termos=" + terms + ", resultados=" + output.size());
+    return output;
+}
+
+
+
     private String normalizeUrl(String url) {
     if (url == null) return null;
     url = url.trim();
@@ -114,6 +167,9 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
     if (url.endsWith("/") && url.length() > 1) url = url.substring(0, url.length() - 1);
     return url;
     }
+
+
+    
 
 }
 

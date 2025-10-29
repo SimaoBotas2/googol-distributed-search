@@ -35,17 +35,26 @@ public class Client {
                     String url = scanner.nextLine();
                     gateway.addUrl(url);
 
-                } else if (option.equals("2")) {
-                    System.out.print("[Client] Introduza palavra para pesquisar: ");
-                    String word = scanner.nextLine();
-                    List<String> results = gateway.search(word);
+                } 
+                else if (option.equals("2")) {
+                    System.out.print("[Client] Introduza as palavras para pesquisar (separadas por espaço): ");
+                    String query = scanner.nextLine().trim();
+
+                    if (query.isEmpty()) {
+                        System.out.println("[Client] Nenhum termo introduzido.");
+                        continue;
+                    }
+
+                    List<String> results = gateway.search(query);
+
                     if (results.isEmpty()) {
-                        System.out.println("[Client] Nao houve resultados.");
+                        System.out.println("[Client] Não houve resultados.");
                     } else {
-                        System.out.println("[Client] Encontrado nos URLs:");
+                        System.out.println("[Client] Resultados encontrados:");
                         for (String u : results) {
                             System.out.println(" - " + u);
                         }
+                        System.out.println("[Client] Total: " + results.size() + " resultados mostrados.");
                     }
 
 

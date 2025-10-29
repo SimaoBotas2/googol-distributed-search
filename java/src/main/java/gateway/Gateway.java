@@ -66,16 +66,35 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         }
     }
 
-    @Override
-    public List<String> search(String word) throws RemoteException {
-        Index barrel = chooseBarrel();
-        try {
-            return barrel.searchWord(word);
-        } catch (Exception e) {
-            System.err.println("[Gateway] Falha ao procurar palavra: " + e.getMessage());
-            return new ArrayList<>();
-        }
+@Override
+public List<String> search(String query) throws RemoteException {
+    if (query == null || query.isBlank()) {
+        return Collections.singletonList("[Gateway] Nenhum termo fornecido.");
     }
+
+    // divide a query em palavras
+    List<String> terms = Arrays.asList(query.toLowerCase().split("\\s+"));
+
+    Index barrel = chooseBarrel(); // método que já tens
+    try {
+        // página 0 e tamanho 10 por defeito
+        return barrel.searchAll(terms, 0, 10);
+    } catch (Exception e) {
+        System.err.println("[Gateway] Falha ao procurar termos: " + e.getMessage());
+
+        // tenta outro barrel em caso de falha
+        for (Index other : barrels) {
+            if (other == barrel) continue;
+            try {
+                return other.searchAll(terms, 0, 10);
+            } catch (Exception ex) {
+                System.err.println("[Gateway] Falha também no outro barrel: " + ex.getMessage());
+            }
+        }
+        return Collections.singletonList("[Gateway] Erro: Nenhum barrel disponível.");
+    }
+}
+
 
     public static void main(String[] args) {
         try {
