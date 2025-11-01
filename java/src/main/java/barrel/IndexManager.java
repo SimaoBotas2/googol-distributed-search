@@ -12,11 +12,12 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
     private static final long serialVersionUID = 1L;
     private List<String> activeBarrels = new ArrayList<>();
-    private final boolean debug = true;
 
     public IndexManager() throws RemoteException {
         super();
     }
+
+
 
     public static void main(String[] args) {
         try {
@@ -51,11 +52,9 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
                     IndexBarrel barrel = new IndexBarrel();
                     Registry registry = LocateRegistry.createRegistry(p);
                     registry.rebind("index", barrel);
-                    manager.activeBarrels.add("localhost:" + p);
                     System.out.println("[IndexManager] Barrel criado na porta " + p);
                 } catch (ExportException ex) {
                     System.err.println("[IndexManager] Já existe um barrel na porta " + p);
-                    manager.activeBarrels.add("localhost:" + p); //adiciona na mesma, caso queiramos inicializar os barrels manualmente
                 } catch (RemoteException ex) {
                     System.err.println("[IndexManager] Erro ao criar barrel na porta " + p + ": " + ex.getMessage());
                 }
@@ -78,39 +77,82 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
    private void startMonitoring(List<Integer> ports) {
     new Thread(() -> {
+        Set<Integer> activeBarrelPorts = new HashSet<>();
+        
         while (true) {
+            // Verificar cada barrel
             for (int port : ports) {
-                String id = "localhost:" + port;
-                boolean alive = false;
-
+                boolean isActive = false;
                 try {
                     Registry reg = LocateRegistry.getRegistry("localhost", port);
                     Index barrel = (Index) reg.lookup("index");
-                    alive = barrel.ping();
+                    isActive = barrel.ping();
                 } catch (Exception ignored) {
-                    alive = false;
+                    isActive = false;
                 }
 
-                synchronized (activeBarrels) {
-                    boolean present = activeBarrels.contains(id);
+                String barrelId = "localhost:" + port;
+                boolean wasActive = activeBarrelPorts.contains(port);
 
-                    if (alive) {
-                        if (!present) {
-                            activeBarrels.add(id);
-                            if (debug) System.out.println("[Monitor] Barrel reativado na porta " + port);
-                        }
-                    } else {
-                        if (present) {
-                            activeBarrels.remove(id);
-                            System.err.println("[Monitor] Barrel desconectado da porta " + port);
-                        }
+                synchronized (activeBarrels) {
+                    if (isActive && !wasActive) {
+                        // Barrel acabou de ficar ativo - sincronizar
+                        activeBarrels.add(barrelId);
+                        activeBarrelPorts.add(port);
+                        System.out.println("[Monitor] Barrel na porta " + port + " está ativo");
+                        sincronizarBarrel(port);
+                    }
+                    else if (!isActive && wasActive) {
+                        // Barrel caiu
+                        activeBarrels.remove(barrelId);
+                        activeBarrelPorts.remove(port);
+                        System.err.println("[Monitor] Barrel na porta " + port + " caiu");
                     }
                 }
             }
 
-            try { Thread.sleep(5000); }
-            catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+            try { Thread.sleep(5000); } 
+            catch (InterruptedException e) { break; }
         }
-    }, "manager-monitor").start();
+    }, "monitor-thread").start();
+}
+
+private void sincronizarBarrel(int novoBarrelPort) {
+    // Tentar sincronizar com qualquer barrel ativo
+    for (String barrelInfo : activeBarrels) {
+        String[] parts = barrelInfo.split(":");
+        int portExistente = Integer.parseInt(parts[1]);
+        
+        if (portExistente == novoBarrelPort) continue;
+
+        try {
+            // Conectar aos barrels
+            Registry regNovo = LocateRegistry.getRegistry("localhost", novoBarrelPort);
+            Registry regExistente = LocateRegistry.getRegistry("localhost", portExistente);
+            
+            Index barrelNovo = (Index) regNovo.lookup("index");
+            Index barrelExistente = (Index) regExistente.lookup("index");
+
+            // Pegar dados do barrel existente
+            Map<String, Object> dadosSinc = barrelExistente.getSynchronizationData();
+            
+            // Sincronizar o novo barrel
+            @SuppressWarnings("unchecked")
+            Map<String, List<String>> indice = (Map<String, List<String>>) dadosSinc.get("index");
+            @SuppressWarnings("unchecked")
+            Set<String> urlsVisitadas = (Set<String>) dadosSinc.get("visited");
+            @SuppressWarnings("unchecked")
+            Queue<String> urlsPendentes = (Queue<String>) dadosSinc.get("pending");
+
+            barrelNovo.synchronizeFrom(indice, urlsVisitadas, urlsPendentes);
+            System.out.println("[Monitor] Barrel " + novoBarrelPort + " sincronizado com " + portExistente);
+            return;
+        } catch (Exception e) {
+            System.err.println("[Monitor] Erro ao sincronizar com " + barrelInfo + ": " + e.getMessage());
+        }
+    }
 }
 }
+
+
+

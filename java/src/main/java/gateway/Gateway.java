@@ -75,9 +75,9 @@ public List<String> search(String query) throws RemoteException {
     // divide a query em palavras
     List<String> terms = Arrays.asList(query.toLowerCase().split("\\s+"));
 
-    Index barrel = chooseBarrel(); // método que já tens
+    Index barrel = chooseBarrel(); 
     try {
-        // página 0 e tamanho 10 por defeito
+        // página 0 e tamanho 10 por defeitog
         return barrel.searchAll(terms, 0, 10);
     } catch (Exception e) {
         System.err.println("[Gateway] Falha ao procurar termos: " + e.getMessage());

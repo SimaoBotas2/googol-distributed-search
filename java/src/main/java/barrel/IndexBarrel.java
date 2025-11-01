@@ -14,8 +14,6 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
 
 
     public static void main(String[] args) {
-        // TODO meter sincronia quando o barrel volta a vida, maybe manager is supposed to do that~
-        // TODO resolver problema de pq o barrel printa 100 vezes que o url ja foi visitado
         try {
             int port = 8183; // valor por defeito
             if (args.length > 0) {
@@ -160,16 +158,54 @@ public synchronized List<String> searchAll(List<String> terms, int page, int pag
 
 
     private String normalizeUrl(String url) {
-    if (url == null) return null;
-    url = url.trim();
-    int hashPos = url.indexOf('#');
-    if (hashPos != -1) url = url.substring(0, hashPos);
-    if (url.endsWith("/") && url.length() > 1) url = url.substring(0, url.length() - 1);
-    return url;
+        if (url == null) return null;
+        url = url.trim();
+        int hashPos = url.indexOf('#');
+        if (hashPos != -1) url = url.substring(0, hashPos);
+        if (url.endsWith("/") && url.length() > 1) url = url.substring(0, url.length() - 1);
+        return url;
     }
 
+    @Override
+    public synchronized void synchronizeFrom(Map<String, List<String>> data, Set<String> newVisitedUrls, Queue<String> newPendingUrls) throws RemoteException {
+        // Sincronizar o índice
+        for (Map.Entry<String, List<String>> entry : data.entrySet()) {
+            String word = entry.getKey();
+            List<String> urls = entry.getValue();
+            
+            indexedItems.putIfAbsent(word, new ArrayList<>());
+            List<String> currentUrls = indexedItems.get(word);
+            
+            for (String url : urls) {
+                if (!currentUrls.contains(url)) {
+                    currentUrls.add(url);
+                }
+            }
+        }
 
-    
+        // Sincronizar URLs visitados
+        visitedUrls.addAll(newVisitedUrls);
 
+        // Sincronizar fila de URLs pendentes
+        for (String url : newPendingUrls) {
+            if (!urlsToIndex.contains(url) && !visitedUrls.contains(url)) {
+                urlsToIndex.add(url);
+            }
+        }
+
+        System.out.println("[IndexBarrel] Sincronização completa:");
+        System.out.println("  - Palavras indexadas: " + indexedItems.size());
+        System.out.println("  - URLs visitados: " + visitedUrls.size());
+        System.out.println("  - URLs pendentes: " + urlsToIndex.size());
+    }
+
+    @Override
+    public synchronized Map<String, Object> getSynchronizationData() throws RemoteException {
+        Map<String, Object> syncData = new HashMap<>();
+        syncData.put("index", new HashMap<>(indexedItems));
+        syncData.put("visited", new HashSet<>(visitedUrls));
+        syncData.put("pending", new LinkedList<>(urlsToIndex));
+        return syncData;
+    }
 }
 

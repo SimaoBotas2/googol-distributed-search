@@ -18,8 +18,11 @@ public interface Index extends Remote {
 
     public List<String> searchAll(List<String> terms, int page, int pageSize) throws RemoteException;
 
-
     //para debugging, imprime as estatisticas do barrel
     public Map<String, List<String>> getIndexSnapshot() throws RemoteException;
+    
+    //Synchronization methods
+    public void synchronizeFrom(Map<String, List<String>> data, Set<String> visitedUrls, Queue<String> pendingUrls) throws RemoteException;
+    public Map<String, Object> getSynchronizationData() throws RemoteException;
 
 }
