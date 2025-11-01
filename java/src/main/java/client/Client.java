@@ -11,6 +11,7 @@ public class Client {
     public static void main(String[] args) {
         try {
             // Ligação à Gateway
+            //TODO meter o cliente a espera se a gateway morrer
             Registry registry = LocateRegistry.getRegistry("localhost", 8186);
             GatewayInterface gateway = (GatewayInterface) registry.lookup("gateway");
 
@@ -23,6 +24,9 @@ public class Client {
                 System.out.println("1) Adicionar URL");
                 System.out.println("2) Procurar palavra");
                 System.out.println("3) [DEBUG] Verificar sincronizacao dos Barrels");
+                System.out.println("4) Páginas ordenadas por numero de ligacoes recebidas (backlinks)");
+                System.out.println("5) Consultar páginas que apontam para uma URL");
+
 
                 String option = scanner.nextLine();
 
@@ -93,7 +97,45 @@ public class Client {
                         ex.printStackTrace();
                     }
 
-                } else {
+                } else if (option.equals("4")) {
+                    int pageSize = 10;
+                    int offset = 0;
+                    while (true) {
+                        List<String> ranking = gateway.getPagesOrderedByInLinks(pageSize, offset);
+                        if (ranking == null || ranking.isEmpty()) {
+                            if (offset == 0){
+                            System.out.println("[Client] Nao existem paginas registadas.");
+                            break;
+                            }
+                        }
+                        System.out.println("\n[Client] Top " + (offset + 1) + "--" + (offset + ranking.size()) + " paginas por numero de ligacoes recebidas (backlinks):");
+                        int pos = offset + 1;
+                        for (String page : ranking) {
+                            System.out.println(pos++ + ". " + page);
+                        }
+                        if (ranking.size() < pageSize) break;
+                        System.out.print("\n[Client] Pretende ver mais resultados? (s/n): ");
+                        String cmd = scanner.nextLine().trim();
+                        if (!cmd.equalsIgnoreCase("s")) break;
+                        offset += pageSize;
+                    }
+                }
+                else if (option.equals("5")) {
+                    System.out.print("[Client] Introduza o URL para consultar backlinks: ");
+                    String urlConsulta = scanner.nextLine().trim();
+                    if (urlConsulta.isEmpty()) {
+                        System.out.println("[Client] URL não pode ser vazio.");
+                    } else {
+                        Set<String> backlinks = gateway.getPagesLinkingTo(urlConsulta);
+                        if (backlinks == null || backlinks.isEmpty()) {
+                            System.out.println("[Client] Nenhuma página aponta para " + urlConsulta);
+                        } else {
+                            System.out.println("\n[Client] Páginas que apontam para " + urlConsulta + ":");
+                            for (String src : backlinks) System.out.println(" - " + src);
+                        }
+                    }
+                }
+                else {
                     System.out.println("[Client] Opção inválida, tente novamente.");
                 }
             }

@@ -11,6 +11,7 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
     private final Queue<String> urlsToIndex; //Url Queue
     private final HashMap<String, List<String>> indexedItems; //palavras
     private final Set<String> visitedUrls; //urls já visitados
+    private final Map<String, Set<String>> incomingLinks = new HashMap<>();
 
 
     public static void main(String[] args) {
@@ -204,5 +205,44 @@ public synchronized List<String> searchAll(List<String> terms, int page, int pag
         syncData.put("pending", new LinkedList<>(urlsToIndex));
         return syncData;
     }
+
+
+    //Funções para dar handle aos backlinks
+    
+    @Override
+    public synchronized void registerPageLinks(String sourceUrl, List<String> outlinks) throws RemoteException {
+    if (sourceUrl == null || outlinks == null) return;
+
+    for (String dest : outlinks) {
+        incomingLinks.computeIfAbsent(dest, k -> new HashSet<>()).add(sourceUrl);
+    }
+    // garante que a página origem também existe
+    incomingLinks.putIfAbsent(sourceUrl, new HashSet<>());
+
+    System.out.println("[IndexBarrel] Registadas " + outlinks.size() + " ligações a partir de " + sourceUrl);
+    }
+
+
+    public synchronized List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException {
+    return incomingLinks.entrySet().stream()
+        .sorted((a, b) -> Integer.compare(b.getValue().size(), a.getValue().size()))
+        .skip(offset)
+        .limit(limit)
+        .map(Map.Entry::getKey)
+        .toList();
+    }
+
+public synchronized Set<String> getPagesLinkingTo(String url) throws RemoteException {
+    if (url == null || url.isEmpty()) {
+        return Collections.emptySet();
+    }
+    Set<String> sources = incomingLinks.get(url);
+    if (sources == null) {
+        return Collections.emptySet();
+    }
+    // Retorna uma cópia para evitar que o cliente altere os dados internos
+    return new HashSet<>(sources);
+}
+
 }
 

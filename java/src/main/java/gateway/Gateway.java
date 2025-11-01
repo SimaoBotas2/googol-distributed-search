@@ -50,21 +50,21 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         }
     }
 
-    private Index chooseBarrel() {
-        Random rand = new Random();
-        return barrels.get(rand.nextInt(barrels.size()));
-    }
+private Index chooseBarrel() {
+    Random rand = new Random();
+    return barrels.get(rand.nextInt(barrels.size()));
+}
 
-    @Override
-    public void addUrl(String url) throws RemoteException {
-        Index barrel = chooseBarrel();
-        try {
-            barrel.putNew(url);
-            System.out.println("[Gateway] URL enviada ao Barrel para indexacao: " + url);
-        } catch (Exception e) {
-            System.err.println("[Gateway] Falha ao adicionar URL: " + e.getMessage());
-        }
+@Override
+public void addUrl(String url) throws RemoteException {
+    Index barrel = chooseBarrel();
+    try {
+        barrel.putNew(url);
+        System.out.println("[Gateway] URL enviada ao Barrel para indexacao: " + url);
+    } catch (Exception e) {
+        System.err.println("[Gateway] Falha ao adicionar URL: " + e.getMessage());
     }
+}
 
 @Override
 public List<String> search(String query) throws RemoteException {
@@ -87,8 +87,23 @@ public List<String> search(String query) throws RemoteException {
 }
 
 
+@Override
+public List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException {
+    Index barrel = chooseBarrel();
+    return barrel.getPagesOrderedByInLinks(limit, offset);
+}
 
-    public static void main(String[] args) {
+public Set<String> getPagesLinkingTo(String url) throws RemoteException {
+    Index barrel = chooseBarrel();
+    try {
+        return barrel.getPagesLinkingTo(url);
+    } catch (Exception e) {
+        throw new RemoteException("[Gateway] Erro ao obter páginas que apontam para " + url + ": " + e.getMessage());
+    }
+}
+
+
+public static void main(String[] args) {
         try {
             Gateway gateway = new Gateway();
 

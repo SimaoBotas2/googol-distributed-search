@@ -97,7 +97,6 @@ public class Downloader {
                             }
 
                         }
-                        //coloquei aqui, can I?
                         barrels = atualizarBarrels(manager);
                     }
 
@@ -105,6 +104,7 @@ public class Downloader {
                     Elements links = doc.select("a[href]");
 
                     Set<String> alreadySeen = new HashSet<>(); //evitar que o downloader vejo os mesmos urls duas vezes
+                    List<String> outlinks = new ArrayList<>(); //guardar os links visto para backlinking das páginas
 
                     for (Element link : links) {
                         String absUrl = link.attr("abs:href");
@@ -112,6 +112,7 @@ public class Downloader {
 
                         if (absUrl != null ||  !alreadySeen.contains(absUrl)) {
                             alreadySeen.add(absUrl);
+                            outlinks.add(absUrl);
                             for (Index b : barrels) {
                                 try {
                                     b.putNew(absUrl);
@@ -121,6 +122,14 @@ public class Downloader {
                             }
                         }
                     }
+                
+                for (Index b : barrels) {
+                    try {
+                        b.registerPageLinks(url, outlinks);
+                    } catch (Exception e) {
+                        System.err.println("[Downloader] Falha ao registar ligacoes de paginas : " + e.getMessage());
+                    }
+                }
 
                 } 
                 catch (Exception e) {
