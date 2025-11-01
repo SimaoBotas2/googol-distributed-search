@@ -154,9 +154,6 @@ public synchronized List<String> searchAll(List<String> terms, int page, int pag
     System.out.println("[IndexBarrel] searchAll -> termos=" + terms + ", resultados=" + output.size());
     return output;
 }
-
-
-
     private String normalizeUrl(String url) {
         if (url == null) return null;
         url = url.trim();
@@ -193,7 +190,7 @@ public synchronized List<String> searchAll(List<String> terms, int page, int pag
             }
         }
 
-        System.out.println("[IndexBarrel] Sincronização completa:");
+        System.out.println("[IndexBarrel] Sincronizacao completa:");
         System.out.println("  - Palavras indexadas: " + indexedItems.size());
         System.out.println("  - URLs visitados: " + visitedUrls.size());
         System.out.println("  - URLs pendentes: " + urlsToIndex.size());

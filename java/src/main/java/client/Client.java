@@ -37,24 +37,30 @@ public class Client {
 
                 } 
                 else if (option.equals("2")) {
-                    System.out.print("[Client] Introduza as palavras para pesquisar (separadas por espaço): ");
-                    String query = scanner.nextLine().trim();
-
-                    if (query.isEmpty()) {
-                        System.out.println("[Client] Nenhum termo introduzido.");
-                        continue;
-                    }
-
+                    System.out.print("[Client] Introduza as palavras para pesquisar (separadas por espaco): ");
+                    String query = scanner.nextLine();
                     List<String> results = gateway.search(query);
-
                     if (results.isEmpty()) {
                         System.out.println("[Client] Não houve resultados.");
                     } else {
-                        System.out.println("[Client] Resultados encontrados:");
-                        for (String u : results) {
-                            System.out.println(" - " + u);
+                        int pageSize = 10;
+                        int index = 0;
+                        while (index < results.size()) {
+                            int end = Math.min(index + pageSize, results.size());
+                            System.out.println("\n[Client] Resultados " + (index + 1) + "--" + end + " de " + results.size() + ":");
+                            for (int i = index; i < end; i++) {
+                                System.out.println(" - " + results.get(i));
+                            }
+                            if (end >= results.size()) {
+                                break; // já não há mais resultados
+                            }
+                            System.out.print("\n[Client] Pretende ver mais resultados? (s/n): ");
+                            String cmd = scanner.nextLine().trim();
+                            if (!cmd.equalsIgnoreCase("s")) {
+                                break; // utilizador não quer ver mais
+                            }
+                            index += pageSize;
                         }
-                        System.out.println("[Client] Total: " + results.size() + " resultados mostrados.");
                     }
 
 
