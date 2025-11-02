@@ -174,6 +174,40 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         }
     }
 
+    @Override
+    public SystemStats getSystemStats() throws RemoteException {
+    SystemStats stats = new SystemStats();
+    Map<String, Integer> porBarrel = new LinkedHashMap<>();
+    stats.tamanhoPorBarrel = porBarrel;
+
+    synchronized (barrelMap) {
+        stats.activeBarrels = barrelMap.size();
+
+        Set<String> urlsUnicos = new HashSet<>();
+
+        for (Map.Entry<Index, String> entry : barrelMap.entrySet()) {
+            Index barrel = entry.getKey();
+            String info = entry.getValue();
+
+            try {
+                Map<String, List<String>> snapshot = barrel.getIndexSnapshot();
+                long totalPalavras = snapshot.values().stream().mapToInt(List::size).sum();
+                urlsUnicos.addAll(snapshot.values().stream().flatMap(List::stream).toList());
+                porBarrel.put(info, snapshot.size());
+                stats.totalPalavras += totalPalavras;
+            } catch (Exception e) {
+                System.err.println("[Gateway] Erro ao recolher estatisticas do Barrel " + info + ": " + e.getMessage());
+            }
+        }
+
+        stats.totalUrls = urlsUnicos.size();
+    }
+
+    return stats;
+    }   
+
+
+
     public static void main(String[] args) throws InterruptedException {
         while (true) {
             try {

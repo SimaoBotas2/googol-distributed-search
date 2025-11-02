@@ -8,4 +8,6 @@ public interface GatewayInterface extends Remote{
     List<String> search(String word) throws RemoteException;
     List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException;
     Set<String> getPagesLinkingTo(String url) throws RemoteException;
+
+    SystemStats getSystemStats() throws RemoteException;
 }

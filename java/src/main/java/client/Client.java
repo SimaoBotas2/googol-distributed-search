@@ -1,6 +1,7 @@
 package client;
 
 import gateway.GatewayInterface;
+import gateway.SystemStats;
 import barrel.Index;
 import barrel.Manager;
 import java.rmi.registry.LocateRegistry;
@@ -12,11 +13,11 @@ public class Client {
     private static Thread statsThread;
     private static volatile boolean statsOn;
     private static GatewayInterface gateway;
+    private static int REFRESH_TIME = 8000;
 
     public static void main(String[] args) {
         try {
             // Ligação à Gateway
-            // TODO: meter o cliente à espera se a gateway morrer
             Registry registry = LocateRegistry.getRegistry("localhost", 8186);
             gateway = (GatewayInterface) registry.lookup("gateway");
 
@@ -168,52 +169,25 @@ public class Client {
         System.out.println("[Client] Estatísticas em tempo real DESLIGADAS.");
     }
 
-    /** Thread que periodicamente atualiza e imprime as estatísticas do sistema */
-    private static void atualizarEstatisticas() {
-        while (statsOn) {
-            try {
-                Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
-                Manager manager = (Manager) regManager.lookup("manager");
-                List<String> activeBarrels = manager.getActiveBarrels();
+    // Thread que periodicamente atualiza e imprime as estatísticas do sistema 
+private static void atualizarEstatisticas() {
+    while (statsOn) {
+        try {
+            SystemStats stats = gateway.getSystemStats();
+            System.out.println(stats);
 
-                long totalPalavras = 0;
-                long palavrasDiferentes = 0;
-                long totalUrls = 0;
-
-                System.out.println("\n=== [ESTATISTICAS DO SISTEMA] ===");
-                System.out.println("Barrels ativos: " + activeBarrels.size());
-
-                for (String info : activeBarrels) {
-                    try {
-                        String[] parts = info.split(":");
-                        String host = parts[0];
-                        int port = Integer.parseInt(parts[1]);
-                        Registry reg = LocateRegistry.getRegistry(host, port);
-                        Index barrel = (Index) reg.lookup("index");
-
-                        Map<String, List<String>> snapshot = barrel.getIndexSnapshot();
-                        palavrasDiferentes += snapshot.keySet().size();
-                        totalPalavras += snapshot.values().stream().mapToInt(List::size).sum();
-                        totalUrls += snapshot.values().stream().flatMap(List::stream).distinct().count();
-
-                        System.out.println(" - Barrel " + port + ": " + snapshot.size() + " palavras indexadas");
-                    } catch (Exception e) {
-                        System.err.println(" - Falha a aceder ao Barrel " + info + ": " + e.getMessage());
-                    }
-                }
-
-                System.out.println("Total de palavras processadas: " + totalPalavras);
-                System.out.println("Palavras diferentes: " + palavrasDiferentes);
-                System.out.println("URLs processados: " + totalUrls);
-                System.out.println("====================================\n");
-
-                // Atualiza a cada 8 segundos enquanto estiver ligado
-                for (int i = 0; i < 8 && statsOn; i++) Thread.sleep(1000);
-
-            } catch (Exception e) {
-                System.err.println("[Estatísticas] Erro ao atualizar: " + e.getMessage());
-                try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
+            // Espera REFRESH_TIME (definido no private da classe)
+            if (statsOn) {
+                Thread.sleep(REFRESH_TIME);
             }
+
+
+        } catch (Exception e) {
+            System.err.println("[Estatísticas] Erro ao obter dados: " + e.getMessage());
+            try { Thread.sleep(5000); } 
+            catch (InterruptedException ignored) {}
         }
     }
+}
+
 }

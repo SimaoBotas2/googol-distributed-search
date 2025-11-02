@@ -47,7 +47,7 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
                 System.out.println("[IndexBarrel] takeNext -> " + next);
                 return next;
             } else {
-                System.out.println("[IndexBarrel] takeNext -> ignorado (já visitado): " + next);
+                System.out.println("[IndexBarrel] takeNext -> ignorado (ja visitado): " + next);
             }
         }
         return null;
@@ -60,12 +60,12 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
             return;
         
         if(visitedUrls.contains(norm)){
-            System.out.println("[IndexBarrel] putnew -> url já visitado:" + norm);
+            System.out.println("[IndexBarrel] putnew -> url ja visitado:" + norm);
             return;
         }
 
         if (urlsToIndex.contains(norm)) {
-        System.out.println("[IndexBarrel] putNew -> já na fila: " + norm);
+        System.out.println("[IndexBarrel] putNew -> ja na fila: " + norm);
         return;
         }
 
@@ -143,7 +143,7 @@ public synchronized List<String> searchAll(List<String> terms, int page, int pag
     int from = Math.max(0, page * pageSize);
     int to = Math.min(urlsOrdenadas.size(), from + pageSize);
     if (from >= to) {
-        return Collections.singletonList("Página sem resultados.");
+        return Collections.singletonList("Pagina sem resultados.");
     }
 
     // Gerar lista de texto formatado
@@ -219,7 +219,7 @@ public synchronized List<String> searchAll(List<String> terms, int page, int pag
     // garante que a página origem também existe
     incomingLinks.putIfAbsent(sourceUrl, new HashSet<>());
 
-    System.out.println("[IndexBarrel] Registadas " + outlinks.size() + " ligações a partir de " + sourceUrl);
+    System.out.println("[IndexBarrel] Registadas " + outlinks.size() + " ligacoes a partir de " + sourceUrl);
     }
 
 
