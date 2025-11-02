@@ -1,12 +1,10 @@
 package barrel;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
 import java.util.*;
+import common.Config;
 
 public class IndexManager extends UnicastRemoteObject implements Manager {
 
@@ -17,104 +15,84 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
         super();
     }
 
+    // funções auxiliars para os ips e ports
+    private static String hostOf(String addr) { // "ip:port" -> "ip"
+        int i = addr.lastIndexOf(':');
+        return (i > 0) ? addr.substring(0, i) : addr;
+    }
+    private static int portOf(String addr) { // "ip:port" -> port
+        int i = addr.lastIndexOf(':');
+        return (i > 0) ? Integer.parseInt(addr.substring(i + 1)) : -1;
+    }
+
     public static void main(String[] args) {
         try {
-            // Define o IP público/local desta máquina
-            System.setProperty("java.rmi.server.hostname", "192.168.1.66"); 
+            //ler config
+            final String managerIp   = Config.get("manager.ip");
+            final int    managerPort = Config.getInt("manager.port", 8182);
 
-            // Criação e exportação do Manager remoto
+            // barrels declarados no config (2 máquinas)
+            final String barrel1 = Config.get("barrel.1.ip") + ":" + Config.get("barrel.1.port");
+            final String barrel2 = Config.get("barrel.2.ip") + ":" + Config.get("barrel.2.port");
+            final List<String> configuredBarrels = Arrays.asList(barrel1, barrel2);
+
+            // hostname RMI desta máquina
+            System.setProperty("java.rmi.server.hostname", managerIp);
+
+            // registar o manager
             IndexManager manager = new IndexManager();
-            int port = 8182;
-            Registry reg = LocateRegistry.createRegistry(port);
+            Registry reg = LocateRegistry.createRegistry(managerPort);
             reg.rebind("manager", manager);
-            System.out.println("[IndexManager] Manager registado na porta " + port);
+            System.out.println("[IndexManager] Manager registado em " + managerIp + ":" + managerPort);
 
-            // Ler ficheiro de configuração (portas dos barrels)
-            String configFile = "config.txt";
-            List<Integer> ports = new ArrayList<>();
+            // ver os barrels de acordo com a info
+            for (String addr : configuredBarrels) {
+                String ip= hostOf(addr);
+                int port = portOf(addr);
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(configFile))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (line.isEmpty() || line.startsWith("#"))
-                        continue;
-                    ports.add(Integer.parseInt(line.split("\\s+")[0]));
-                }
-            } catch (IOException e) {
-                System.err.println("[IndexManager] Erro ao ler config " + configFile + ": " + e.getMessage());
-                return;
-            }
-
-            // Lista de IPs a verificar — inclui o local e o remoto
-            List<String> ips = Arrays.asList(
-                "192.168.1.66", // pc portatil
-                "192.168.1.183" // pc fixo
-            );
-
-            // Verifica cada porta: se já houver um barrel remoto, não cria localmente
-            for (int p : ports) {
-                boolean foundRemote = false;
-
-                for (String ip : ips) {
-                    try {
-                        Registry regRemote = LocateRegistry.getRegistry(ip, p);
-                        Index remoteBarrel = (Index) regRemote.lookup("index");
-
-                        if (remoteBarrel.ping()) {
-                            System.out.println("[IndexManager] Barrel já existente em " + ip + ":" + p);
-
-                            // Adiciona imediatamente à lista de ativos
-                            String barrelId = ip + ":" + p;
-                            synchronized (manager.activeBarrels) {
-                                if (!manager.activeBarrels.contains(barrelId)) {
-                                    manager.activeBarrels.add(barrelId);
-                                }
-                            }
-
-                            foundRemote = true;
-                            break;
+                boolean found = false;
+                try {
+                    Registry r = LocateRegistry.getRegistry(ip, port);
+                    Index remote = (Index) r.lookup("index");
+                    if (remote.ping()) {
+                        found = true;
+                        synchronized (manager.activeBarrels) {
+                            if (!manager.activeBarrels.contains(addr)) manager.activeBarrels.add(addr);
                         }
-                    } catch (Exception ignored) {
-                        // Se der erro, é porque não existe naquele IP
+                        System.out.println("[IndexManager] Barrel já ativo em " + addr);
                     }
-                }
+                } catch (Exception ignore) { }
 
-                // Se não houver nenhum barrel ativo nessa porta, cria localmente
-                if (!foundRemote) {
+                // cria localmente APENAS se o barrel configurado é desta máquina
+                if (!found && ip.equals(managerIp)) {
                     try {
                         IndexBarrel barrel = new IndexBarrel();
-                        Registry localReg = LocateRegistry.createRegistry(p);
+                        Registry localReg;
+                        try {
+                            localReg = LocateRegistry.createRegistry(port);
+                        } catch (ExportException e) {
+                            // registry já existia — reutilizar
+                            localReg = LocateRegistry.getRegistry(port);
+                        }
                         localReg.rebind("index", barrel);
-                        System.out.println("[IndexManager] Barrel LOCAL criado na porta " + p);
-
-                        String barrelId = "192.168.1.66:" + p;
                         synchronized (manager.activeBarrels) {
-                            if (!manager.activeBarrels.contains(barrelId)) {
-                                manager.activeBarrels.add(barrelId);
-                            }
+                            if (!manager.activeBarrels.contains(addr)) manager.activeBarrels.add(addr);
                         }
-
-                    } catch (ExportException ex) {
-                        System.err.println("[IndexManager] Já existe barrel local na porta " + p);
-                        String barrelId = "192.168.1.66:" + p;
-                        synchronized (manager.activeBarrels) {
-                            if (!manager.activeBarrels.contains(barrelId)) {
-                                manager.activeBarrels.add(barrelId);
-                            }
-                        }
-                    } catch (RemoteException ex) {
-                        System.err.println("[IndexManager] Erro ao criar barrel local na porta " + p + ": " + ex.getMessage());
+                        System.out.println("[IndexManager] Barrel LOCAL criado em " + addr);
+                    } catch (RemoteException e) {
+                        System.err.println("[IndexManager] Erro a criar barrel local em " + addr + ": " + e.getMessage());
                     }
                 }
             }
 
-            System.out.println("[IndexManager] Verificacao concluida. Barrels ativos:");
-            for (String b : manager.activeBarrels)
-                System.out.println("  -> " + b);
+            // listar estado inicial
+            System.out.println("[IndexManager] Barrels ativos no arranque:");
+            synchronized (manager.activeBarrels) {
+                for (String b : manager.activeBarrels) System.out.println("  -> " + b);
+            }
 
-            System.out.println("[IndexManager] Iniciando monitorizacao...");
-            manager.startMonitoring(ports);
+            // -------- iniciar monitorização com base no config --------
+            manager.startMonitoring(configuredBarrels);
 
         } catch (RemoteException e) {
             System.err.println("[IndexManager] Erro ao iniciar Manager: " + e.getMessage());
@@ -124,60 +102,59 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
     @Override
     public List<String> getActiveBarrels() throws RemoteException {
-        return new ArrayList<>(activeBarrels);
+        synchronized (activeBarrels) {
+            return new ArrayList<>(activeBarrels);
+        }
     }
 
-    private void startMonitoring(List<Integer> ports) {
-        // IPs a monitorizar
-        List<String> ips = Arrays.asList("192.168.1.183", "192.168.1.66");
-
+    // monitoriza exatamente os IP:PORTA do config
+    private void startMonitoring(List<String> barrelAddrs) {
         new Thread(() -> {
-            Set<String> activeIds = new HashSet<>(activeBarrels);
+            Set<String> activeIds;
+            synchronized (activeBarrels) {
+                activeIds = new HashSet<>(activeBarrels);
+            }
 
             while (true) {
-                for (String ip : ips) {
-                    for (int port : ports) {
-                        boolean isActive = false;
-                        try {
-                            Registry reg = LocateRegistry.getRegistry(ip, port);
-                            Index barrel = (Index) reg.lookup("index");
-                            isActive = barrel.ping();
-                        } catch (Exception ignored) {
-                            isActive = false;
-                        }
+                for (String addr : barrelAddrs) {
+                    String ip = hostOf(addr);
+                    int port  = portOf(addr);
 
-                        String id = ip + ":" + port;
-                        boolean wasActive = activeIds.contains(id);
+                    boolean isActive = false;
+                    try {
+                        Registry reg = LocateRegistry.getRegistry(ip, port);
+                        Index barrel = (Index) reg.lookup("index");
+                        isActive = barrel.ping();
+                    } catch (Exception ignored) { isActive = false; }
 
-                        synchronized (activeBarrels) {
-                            if (isActive && !wasActive) {
-                                activeBarrels.add(id);
-                                activeIds.add(id);
-                                System.out.println("[Monitor] Barrel ativo em " + id);
-                                sincronizarBarrel(ip, port);
-                            } else if (!isActive && wasActive) {
-                                activeBarrels.remove(id);
-                                activeIds.remove(id);
-                                System.err.println("[Monitor] Barrel caiu em " + id);
-                            }
+                    boolean wasActive;
+                    synchronized (activeBarrels) { wasActive = activeIds.contains(addr); }
+
+                    synchronized (activeBarrels) {
+                        if (isActive && !wasActive) {
+                            activeBarrels.add(addr);
+                            activeIds.add(addr);
+                            System.out.println("[Monitor] Barrel ativo em " + addr);
+                            sincronizarBarrel(ip, port);
+                        } else if (!isActive && wasActive) {
+                            activeBarrels.remove(addr);
+                            activeIds.remove(addr);
+                            System.err.println("[Monitor] Barrel caiu em " + addr);
                         }
                     }
                 }
 
-                try { Thread.sleep(5000); }
-                catch (InterruptedException e) { break; }
+                try { Thread.sleep(5000); } catch (InterruptedException e) { break; }
             }
         }, "monitor-thread").start();
     }
 
     private void sincronizarBarrel(String ipNovo, int novoPort) {
-        for (String barrelInfo : activeBarrels) {
-            String[] parts = barrelInfo.split(":");
-            String ipExistente = parts[0];
-            int portExistente = Integer.parseInt(parts[1]);
+        for (String barrelInfo : getSafeActive()) {
+            String ipExistente = hostOf(barrelInfo);
+            int portExistente  = portOf(barrelInfo);
 
-            if (ipExistente.equals(ipNovo) && portExistente == novoPort)
-                continue;
+            if (ipExistente.equals(ipNovo) && portExistente == novoPort) continue;
 
             try {
                 Registry regNovo = LocateRegistry.getRegistry(ipNovo, novoPort);
@@ -197,11 +174,17 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
                 barrelNovo.synchronizeFrom(indice, urlsVisitadas, urlsPendentes);
                 System.out.println("[Monitor] Barrel " + ipNovo + ":" + novoPort +
-                                   " sincronizado com " + ipExistente + ":" + portExistente);
+                        " sincronizado com " + ipExistente + ":" + portExistente);
                 return;
             } catch (Exception e) {
                 System.err.println("[Monitor] Erro ao sincronizar com " + barrelInfo + ": " + e.getMessage());
             }
         }
+    }
+
+
+    //para handling de acesso as threads
+    private List<String> getSafeActive() {
+        synchronized (activeBarrels) { return new ArrayList<>(activeBarrels); }
     }
 }

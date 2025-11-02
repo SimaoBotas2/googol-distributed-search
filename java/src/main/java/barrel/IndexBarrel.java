@@ -5,6 +5,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.*;
 import java.util.*;
+import common.Config; // leitura do ficheiro config
 
 public class IndexBarrel extends UnicastRemoteObject implements Index {
 
@@ -13,19 +14,35 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
     private final Set<String> visitedUrls; //urls já visitados
     private final Map<String, Set<String>> incomingLinks = new HashMap<>();
 
-
     public static void main(String[] args) {
-        System.setProperty("java.rmi.server.hostname", "192.168.1.66");
-        try {
-            int port = 8183; // valor por defeito
-            if (args.length > 0) {
-                port = Integer.parseInt(args[0]);
-            }
+        // exige argumento 1 ou 2
+        if (args.length == 0 || !(args[0].equals("1") || args[0].equals("2"))) {
+            System.err.println("Uso: java barrel.IndexBarrel <1|2>");
+            System.err.println("Exemplo: java barrel.IndexBarrel 1  (para barrel.1)");
+            System.exit(1);
+        }
 
+        String arg = args[0];
+        String ip;
+        int port;
+
+        // leitura da configuração
+        if (arg.equals("1")) {
+            ip = Config.get("barrel.1.ip");
+            port = Config.getInt("barrel.1.port", 8183);
+        } else {
+            ip = Config.get("barrel.2.ip");
+            port = Config.getInt("barrel.2.port", 8184);
+        }
+
+        System.setProperty("java.rmi.server.hostname", ip);
+
+        try {
             IndexBarrel barrel = new IndexBarrel();
             Registry registry = LocateRegistry.createRegistry(port);
             registry.rebind("index", barrel);
             System.out.println("[IndexBarrel] Registry criado na porta " + port + " e objeto 'index' registado.");
+            System.out.println("[IndexBarrel] IP configurado: " + ip);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -246,4 +263,3 @@ public synchronized Set<String> getPagesLinkingTo(String url) throws RemoteExcep
 }
 
 }
-

@@ -2,8 +2,6 @@ package client;
 
 import gateway.GatewayInterface;
 import gateway.SystemStats;
-import barrel.Index;
-import barrel.Manager;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
@@ -17,10 +15,18 @@ public class Client {
 
     public static void main(String[] args) {
         try {
-            //TODO RECEBER OS ARGS DE UM FILE, SÓ FALTA ISSO
-            // Ligação à Gateway
-            Registry registry = LocateRegistry.getRegistry("192.168.1.183", 8186);
-            gateway = (GatewayInterface) registry.lookup("gateway");
+            // Tentativas de ligação à Gateway
+            while (gateway == null) {
+                try {
+                    System.out.println("[Client] A tentar ligar à Gateway (192.168.1.183:8186)...");
+                    Registry registry = LocateRegistry.getRegistry("192.168.1.183", 8186);
+                    gateway = (GatewayInterface) registry.lookup("gateway");
+                    System.out.println("[Client] Ligado à Gateway com sucesso!");
+                } catch (Exception e) {
+                    System.err.println("[Client] Gateway indisponível: " + e.getMessage());
+                    try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
+                }
+            }
 
             Scanner scanner = new Scanner(System.in);
             System.out.println("Bem-vindo/a ao cliente Googol!");
@@ -30,10 +36,9 @@ public class Client {
                 System.out.println("0) Sair");
                 System.out.println("1) Adicionar URL");
                 System.out.println("2) Procurar palavra");
-                System.out.println("3) [DEBUG] Verificar sincronização dos Barrels");
-                System.out.println("4) Páginas ordenadas por número de ligações recebidas (backlinks)");
-                System.out.println("5) Consultar páginas que apontam para uma URL");
-                System.out.println("6) " + (statsOn ? "Desligar" : "Ligar") + " estatísticas em tempo real");
+                System.out.println("3) Páginas ordenadas por número de ligacoes recebidas (backlinks)");
+                System.out.println("4) Consultar paginas que apontam para uma URL");
+                System.out.println("5) " + (statsOn ? "Desligar" : "Ligar") + " estatísticas em tempo real");
 
                 String option = scanner.nextLine();
 
@@ -71,34 +76,6 @@ public class Client {
                     }
 
                 } else if (option.equals("3")) {
-                    // Verificar sincronização dos barrels
-                    try {
-                        Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
-                        Manager manager = (Manager) regManager.lookup("manager");
-                        List<String> active = manager.getActiveBarrels();
-
-                        for (String info : active) {
-                            String[] parts = info.split(":");
-                            String host = parts[0];
-                            int port = Integer.parseInt(parts[1]);
-                            Registry reg = LocateRegistry.getRegistry(host, port);
-                            Index barrel = (Index) reg.lookup("index");
-                            Map<String, List<String>> snapshot = barrel.getIndexSnapshot();
-
-                            System.out.println("\n==== BARREL " + port + " ====");
-                            System.out.println("Total de palavras indexadas: " + snapshot.size());
-                            snapshot.entrySet().stream()
-                                    .limit(10)
-                                    .forEach(e ->
-                                            System.out.println(e.getKey() + " -> " + e.getValue()));
-                        }
-
-                    } catch (Exception ex) {
-                        System.err.println("[DEBUG] Erro ao inspecionar os Barrels: " + ex.getMessage());
-                        ex.printStackTrace();
-                    }
-
-                } else if (option.equals("4")) {
                     int pageSize = 10;
                     int offset = 0;
                     while (true) {
@@ -110,7 +87,7 @@ public class Client {
                             break;
                         }
                         System.out.println("\n[Client] Top " + (offset + 1) + "--" + (offset + ranking.size())
-                                + " paginas por número de ligacoes recebidas (backlinks):");
+                                + " paginas por numero de ligacoes recebidas (backlinks):");
                         int pos = offset + 1;
                         for (String page : ranking) {
                             System.out.println(pos++ + ". " + page);
@@ -122,28 +99,28 @@ public class Client {
                         offset += pageSize;
                     }
 
-                } else if (option.equals("5")) {
+                } else if (option.equals("4")) {
                     System.out.print("[Client] Introduza o URL para consultar backlinks: ");
                     String urlConsulta = scanner.nextLine().trim();
                     if (urlConsulta.isEmpty()) {
-                        System.out.println("[Client] URL não pode ser vazio.");
+                        System.out.println("[Client] URL nao pode ser vazio.");
                     } else {
                         Set<String> backlinks = gateway.getPagesLinkingTo(urlConsulta);
                         if (backlinks == null || backlinks.isEmpty()) {
-                            System.out.println("[Client] Nenhuma página aponta para " + urlConsulta);
+                            System.out.println("[Client] Nenhuma pagina aponta para " + urlConsulta);
                         } else {
-                            System.out.println("\n[Client] Páginas que apontam para " + urlConsulta + ":");
+                            System.out.println("\n[Client] Paginas que apontam para " + urlConsulta + ":");
                             for (String src : backlinks)
                                 System.out.println(" - " + src);
                         }
                     }
 
-                } else if (option.equals("6")) {
+                } else if (option.equals("5")) {
                     if (statsOn) desligarEstatisticas();
                     else ligarEstatisticas();
 
                 } else {
-                    System.out.println("[Client] Opção inválida, tente novamente.");
+                    System.out.println("[Client] Opcao invalida, tente novamente.");
                 }
             }
 
@@ -154,7 +131,7 @@ public class Client {
     }
 
 
-    //Controlo de estatisticas
+    // Controlo de estatísticas
     private static void ligarEstatisticas() {
         if (statsOn) return;
         statsOn = true;
@@ -171,24 +148,21 @@ public class Client {
     }
 
     // Thread que periodicamente atualiza e imprime as estatísticas do sistema 
-private static void atualizarEstatisticas() {
-    while (statsOn) {
-        try {
-            SystemStats stats = gateway.getSystemStats();
-            System.out.println(stats);
+    private static void atualizarEstatisticas() {
+        while (statsOn) {
+            try {
+                SystemStats stats = gateway.getSystemStats();
+                System.out.println(stats);
 
-            // Espera REFRESH_TIME (definido no private da classe)
-            if (statsOn) {
-                Thread.sleep(REFRESH_TIME);
+                if (statsOn) {
+                    Thread.sleep(REFRESH_TIME);
+                }
+
+            } catch (Exception e) {
+                System.err.println("[Estatísticas] Erro ao obter dados: " + e.getMessage());
+                try { Thread.sleep(5000); } 
+                catch (InterruptedException ignored) {}
             }
-
-
-        } catch (Exception e) {
-            System.err.println("[Estatísticas] Erro ao obter dados: " + e.getMessage());
-            try { Thread.sleep(5000); } 
-            catch (InterruptedException ignored) {}
         }
     }
-}
-
 }

@@ -2,6 +2,7 @@ package gateway;
 
 import barrel.Index;
 import barrel.Manager;
+import common.Config;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
@@ -12,8 +13,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
     private final Map<Index, String> barrelMap = new HashMap<>();
     private volatile Manager manager;
 
-    public Gateway() throws RemoteException {
-        super(8186);
+    public Gateway(String managerIp, int managerPort) throws RemoteException {
+        super(Config.getInt("gateway.port", 8186)); // usa a porta do config
 
         // Thread que mantém Manager e Barrels sincronizados
         Thread monitorThread = new Thread(() -> {
@@ -22,8 +23,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                     // Tentar ligar ao Manager se não houver ligação
                     if (manager == null) {
                         try {
-                            System.out.println("[Gateway] A tentar ligar ao Manager na porta 8182...");
-                            Registry regManager = LocateRegistry.getRegistry("192.168.1.66", 8182);
+                            System.out.println("[Gateway] A tentar ligar ao Manager em " + managerIp + ":" + managerPort + "...");
+                            Registry regManager = LocateRegistry.getRegistry(managerIp, managerPort);
                             manager = (Manager) regManager.lookup("manager");
                             System.out.println("[Gateway] Ligado ao Manager!");
                         } catch (Exception e) {
@@ -33,7 +34,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                             continue;
                         }
                     }
-                    //atualizar os barrels
+
+                    // Atualizar lista de barrels ativos
                     atualizarBarrels();
 
                     Thread.sleep(5000);
@@ -51,21 +53,19 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         monitorThread.start();
     }
 
-    /** Atualiza a lista de Barrels ativos via Manager */
+    //Atualiza a lista de barrels(via manager)
     private void atualizarBarrels() {
         if (manager == null) return;
 
         try {
             List<String> activeBarrels = manager.getActiveBarrels();
             synchronized (barrelMap) {
-
                 // Adicionar novos
                 for (String info : activeBarrels) {
                     if (!barrelMap.containsValue(info)) {
                         ligarBarrel(info);
                     }
                 }
-
                 // Remover os que já não estão ativos
                 barrelMap.entrySet().removeIf(entry -> !activeBarrels.contains(entry.getValue()));
             }
@@ -73,14 +73,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
             System.out.println("[Gateway] Lista de Barrels atualizada. Total: " + barrelMap.size());
 
         } catch (RemoteException re) {
-            System.err.println("[Gateway] Perda de conexao com Manager: " + re.getMessage());
+            System.err.println("[Gateway] Perda de conexão com Manager: " + re.getMessage());
             manager = null;
         } catch (Exception e) {
             System.err.println("[Gateway] Erro ao atualizar Barrels: " + e.getMessage());
         }
     }
 
-    /** Tenta ligar a um novo Barrel (se não existir ainda) */
+    //tenta ligar a um barrel novo que aparece apos config
     private void ligarBarrel(String info) {
         try {
             String[] parts = info.split(":");
@@ -108,6 +108,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         }
     }
 
+    //metodos que sao chamados de fora
     @Override
     public void addUrl(String url) throws RemoteException, InterruptedException {
         if (url == null || url.isBlank()) return;
@@ -116,18 +117,16 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
 
         while (!enviado) {
             Index barrel = chooseBarrel();
-
             if (barrel == null) {
-                System.err.println("[Gateway] Nenhum Barrel disponível. A aguardar reconexao...");
+                System.err.println("[Gateway] Nenhum Barrel disponível. A aguardar reconexão...");
                 Thread.sleep(2000);
                 continue;
             }
 
             try {
                 barrel.putNew(url);
-                System.out.println("[Gateway] URL enviada ao Barrel para indexacao: " + url);
+                System.out.println("[Gateway] URL enviada ao Barrel para indexação: " + url);
                 enviado = true;
-
             } catch (Exception e) {
                 System.err.println("[Gateway] Falha ao adicionar URL (" + url + "): " + e.getMessage());
                 Thread.sleep(timeWait);
@@ -170,53 +169,54 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         try {
             return barrel.getPagesLinkingTo(url);
         } catch (Exception e) {
-            throw new RemoteException("[Gateway] Erro ao obter paginas que apontam para " + url + ": " + e.getMessage());
+            throw new RemoteException("[Gateway] Erro ao obter páginas que apontam para " + url + ": " + e.getMessage());
         }
     }
 
     @Override
     public SystemStats getSystemStats() throws RemoteException {
-    SystemStats stats = new SystemStats();
-    Map<String, Integer> porBarrel = new LinkedHashMap<>();
-    stats.tamanhoPorBarrel = porBarrel;
+        SystemStats stats = new SystemStats();
+        Map<String, Integer> porBarrel = new LinkedHashMap<>();
+        stats.tamanhoPorBarrel = porBarrel;
 
-    synchronized (barrelMap) {
-        stats.activeBarrels = barrelMap.size();
+        synchronized (barrelMap) {
+            stats.activeBarrels = barrelMap.size();
+            Set<String> urlsUnicos = new HashSet<>();
 
-        Set<String> urlsUnicos = new HashSet<>();
-
-        for (Map.Entry<Index, String> entry : barrelMap.entrySet()) {
-            Index barrel = entry.getKey();
-            String info = entry.getValue();
-
-            try {
-                Map<String, List<String>> snapshot = barrel.getIndexSnapshot();
-                long totalPalavras = snapshot.values().stream().mapToInt(List::size).sum();
-                urlsUnicos.addAll(snapshot.values().stream().flatMap(List::stream).toList());
-                porBarrel.put(info, snapshot.size());
-                stats.totalPalavras += totalPalavras;
-            } catch (Exception e) {
-                System.err.println("[Gateway] Erro ao recolher estatisticas do Barrel " + info + ": " + e.getMessage());
+            for (Map.Entry<Index, String> entry : barrelMap.entrySet()) {
+                Index barrel = entry.getKey();
+                String info = entry.getValue();
+                try {
+                    Map<String, List<String>> snapshot = barrel.getIndexSnapshot();
+                    long totalPalavras = snapshot.values().stream().mapToInt(List::size).sum();
+                    urlsUnicos.addAll(snapshot.values().stream().flatMap(List::stream).toList());
+                    porBarrel.put(info, snapshot.size());
+                    stats.totalPalavras += totalPalavras;
+                } catch (Exception e) {
+                    System.err.println("[Gateway] Erro ao recolher estatísticas do Barrel " + info + ": " + e.getMessage());
+                }
             }
+            stats.totalUrls = urlsUnicos.size();
         }
-
-        stats.totalUrls = urlsUnicos.size();
+        return stats;
     }
 
-    return stats;
-    }   
-
-
-
+    // ---------- MAIN ----------
     public static void main(String[] args) throws InterruptedException {
         while (true) {
             try {
-                System.setProperty("java.rmi.server.hostname", "192.168.1.183");
-                Gateway gateway = new Gateway();
-                int gatewayPort = 8186;
+                String gatewayIp = Config.get("gateway.ip");
+                int gatewayPort = Config.getInt("gateway.port", 8186);
+                String managerIp = Config.get("manager.ip");
+                int managerPort = Config.getInt("manager.port", 8182);
+
+                System.setProperty("java.rmi.server.hostname", gatewayIp);
+
+                Gateway gateway = new Gateway(managerIp, managerPort);
                 Registry reg = LocateRegistry.createRegistry(gatewayPort);
                 reg.rebind("gateway", gateway);
-                System.out.println("[Gateway] Registada na porta " + gatewayPort);
+
+                System.out.println("[Gateway] Registada em " + gatewayIp + ":" + gatewayPort);
                 break;
             } catch (RemoteException e) {
                 System.err.println("[Gateway] Erro ao iniciar: " + e.getMessage());
