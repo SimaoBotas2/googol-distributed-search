@@ -1,5 +1,6 @@
 @echo off
 REM ==========================================
+REM **Documento refinado por LLM
 REM  SD-GOOGOL - MAQUINA 1
 REM  (Barrel 1 + Downloader 1 + Gateway)
 REM ==========================================
@@ -24,5 +25,5 @@ timeout /t 3 >nul
 start "Gateway" cmd /k java -cp "%CP%" gateway.Gateway
 
 echo.
-echo [OK] Todos os serviços da MAQUINA 1 foram iniciados!
+echo [OK] Todos os servicos da MAQUINA 1 foram iniciados!
 pause

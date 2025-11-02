@@ -1,5 +1,6 @@
 @echo off
-REM ==========================================
+REM ==========================================~
+REM  **Documento refinado por LLM
 REM  SD-GOOGOL - MAQUINA 2
 REM  (Barrel 2 + Manager + Downloader 2 + Client)
 REM ==========================================
@@ -26,5 +27,5 @@ timeout /t 3 >nul
 start "Client" cmd /k java -cp "%CP%" client.Client
 
 echo.
-echo [OK] Todos os serviços da MAQUINA 2 foram iniciados!
+echo [OK] Todos os servicos da MAQUINA 2 foram iniciados!
 pause
