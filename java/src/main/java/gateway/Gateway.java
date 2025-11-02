@@ -9,95 +9,147 @@ import java.util.*;
 
 public class Gateway extends UnicastRemoteObject implements GatewayInterface {
 
-    private final List<Index> barrels = new ArrayList<>();
+    private final Map<Index, String> barrelMap = new HashMap<>();
+    private volatile Manager manager;
 
     public Gateway() throws RemoteException {
         super();
 
-        while (true) {
-            try {
-                // Ligar ao Manager (porta 8182)
-                System.out.println("[Gateway] A tentar ligar ao Manager na porta 8182...");
-                Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
-                Manager manager = (Manager) regManager.lookup("manager");
-                System.out.println("[Gateway] Ligado ao Manager!");
-
-                // Tentar ligar aos Barrels
-                while (barrels.isEmpty()) {
-                    try {
-                        System.out.println("[Gateway] A obter lista de Barrels ativos...");
-                        List<String> activeBarrels = manager.getActiveBarrels();
-
-                        for (String info : activeBarrels) {
-                            String[] parts = info.split(":");
-                            String host = parts[0];
-                            int port = Integer.parseInt(parts[1]);
-
-                            try {
-                                Registry reg = LocateRegistry.getRegistry(host, port);
-                                Index barrel = (Index) reg.lookup("index");
-                                barrels.add(barrel);
-                                System.out.println("[Gateway] Conectado ao Barrel em " + info);
-                            } catch (Exception ex) {
-                                System.err.println("[Gateway] Falha ao conectar ao Barrel " + info + ": " + ex.getMessage());
-                            }
+        // Thread que mantém Manager e Barrels sincronizados
+        Thread monitorThread = new Thread(() -> {
+            while (true) {
+                try {
+                    // Tentar ligar ao Manager se não houver ligação
+                    if (manager == null) {
+                        try {
+                            System.out.println("[Gateway] A tentar ligar ao Manager na porta 8182...");
+                            Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
+                            manager = (Manager) regManager.lookup("manager");
+                            System.out.println("[Gateway] Ligado ao Manager!");
+                        } catch (Exception e) {
+                            System.err.println("[Gateway] Manager indisponível: " + e.getMessage());
+                            manager = null;
+                            Thread.sleep(3000);
+                            continue;
                         }
+                    }
+                    //atualizar os barrels
+                    atualizarBarrels();
 
-                        if (barrels.isEmpty()) {
-                            System.err.println("[Gateway] Nenhum Barrel ativo. A tentar novamente em 5 segundos...");
-                            Thread.sleep(5000);
-                        } else {
-                            System.out.println("[Gateway] Total de Barrels conectados: " + barrels.size());
-                        }
+                    Thread.sleep(5000);
 
-                    } catch (Exception e) {
-                        System.err.println("[Gateway] Erro ao obter lista de Barrels: " + e.getMessage());
-                        Thread.sleep(5000);
+                } catch (InterruptedException ie) {
+                    break;
+                } catch (Exception e) {
+                    System.err.println("[Gateway] Erro no monitor: " + e.getMessage());
+                    try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
+                }
+            }
+        });
+
+        monitorThread.setDaemon(true);
+        monitorThread.start();
+    }
+
+    /** Atualiza a lista de Barrels ativos via Manager */
+    private void atualizarBarrels() {
+        if (manager == null) return;
+
+        try {
+            List<String> activeBarrels = manager.getActiveBarrels();
+            synchronized (barrelMap) {
+
+                // Adicionar novos
+                for (String info : activeBarrels) {
+                    if (!barrelMap.containsValue(info)) {
+                        ligarBarrel(info);
                     }
                 }
 
-                // Se chegou aqui, conseguiu ligar-se ao manager e a pelo menos um barrel
-                break;
-
-            } catch (Exception e) {
-                System.err.println("[Gateway] Falha ao ligar ao Manager: " + e.getMessage());
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ignored) {}
+                // Remover os que já não estão ativos
+                barrelMap.entrySet().removeIf(entry -> !activeBarrels.contains(entry.getValue()));
             }
+
+            System.out.println("[Gateway] Lista de Barrels atualizada. Total: " + barrelMap.size());
+
+        } catch (RemoteException re) {
+            System.err.println("[Gateway] Perda de conexao com Manager: " + re.getMessage());
+            manager = null;
+        } catch (Exception e) {
+            System.err.println("[Gateway] Erro ao atualizar Barrels: " + e.getMessage());
+        }
+    }
+
+    /** Tenta ligar a um novo Barrel (se não existir ainda) */
+    private void ligarBarrel(String info) {
+        try {
+            String[] parts = info.split(":");
+            String host = parts[0];
+            int port = Integer.parseInt(parts[1]);
+            Registry reg = LocateRegistry.getRegistry(host, port);
+            Index barrel = (Index) reg.lookup("index");
+
+            synchronized (barrelMap) {
+                barrelMap.put(barrel, info);
+            }
+
+            System.out.println("[Gateway] Conectado ao Barrel em " + info);
+        } catch (Exception ex) {
+            System.err.println("[Gateway] Falha ao conectar ao Barrel " + info + ": " + ex.getMessage());
         }
     }
 
     private Index chooseBarrel() {
         Random rand = new Random();
-        return barrels.get(rand.nextInt(barrels.size()));
+        synchronized (barrelMap) {
+            if (barrelMap.isEmpty()) return null;
+            List<Index> lista = new ArrayList<>(barrelMap.keySet());
+            return lista.get(rand.nextInt(lista.size()));
+        }
     }
 
     @Override
-    public void addUrl(String url) throws RemoteException {
-        Index barrel = chooseBarrel();
-        try {
-            barrel.putNew(url);
-            System.out.println("[Gateway] URL enviada ao Barrel para indexação: " + url);
-        } catch (Exception e) {
-            System.err.println("[Gateway] Falha ao adicionar URL: " + e.getMessage());
+    public void addUrl(String url) throws RemoteException, InterruptedException {
+        if (url == null || url.isBlank()) return;
+        boolean enviado = false;
+        long timeWait = 1000;
+
+        while (!enviado) {
+            Index barrel = chooseBarrel();
+
+            if (barrel == null) {
+                System.err.println("[Gateway] Nenhum Barrel disponível. A aguardar reconexão...");
+                Thread.sleep(2000);
+                continue;
+            }
+
+            try {
+                barrel.putNew(url);
+                System.out.println("[Gateway] URL enviada ao Barrel para indexação: " + url);
+                enviado = true;
+
+            } catch (Exception e) {
+                System.err.println("[Gateway] Falha ao adicionar URL (" + url + "): " + e.getMessage());
+                Thread.sleep(timeWait);
+            }
         }
     }
 
     @Override
     public List<String> search(String query) throws RemoteException {
-        if (query == null || query.isBlank()) {
-            return new ArrayList<>();
-        }
+        if (query == null || query.isBlank()) return new ArrayList<>();
         String[] terms = query.trim().toLowerCase().split("\\s+");
         Set<String> deduped = new LinkedHashSet<>();
-        for (String term : terms) {
-            for (Index barrel : barrels) {
-                try {
-                    List<String> partialResults = barrel.searchWord(term);
-                    deduped.addAll(partialResults);
-                } catch (Exception e) {
-                    System.err.println("[Gateway] Falha ao pesquisar no barrel: " + e.getMessage());
+
+        synchronized (barrelMap) {
+            for (String term : terms) {
+                for (Index barrel : barrelMap.keySet()) {
+                    try {
+                        List<String> partialResults = barrel.searchWord(term);
+                        deduped.addAll(partialResults);
+                    } catch (Exception e) {
+                        System.err.println("[Gateway] Falha ao pesquisar no Barrel: " + e.getMessage());
+                    }
                 }
             }
         }
@@ -107,12 +159,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
     @Override
     public List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException {
         Index barrel = chooseBarrel();
+        if (barrel == null) throw new RemoteException("[Gateway] Nenhum Barrel ativo.");
         return barrel.getPagesOrderedByInLinks(limit, offset);
     }
 
     @Override
     public Set<String> getPagesLinkingTo(String url) throws RemoteException {
         Index barrel = chooseBarrel();
+        if (barrel == null) throw new RemoteException("[Gateway] Nenhum Barrel ativo.");
         try {
             return barrel.getPagesLinkingTo(url);
         } catch (Exception e) {
