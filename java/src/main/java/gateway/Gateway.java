@@ -118,14 +118,14 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
             Index barrel = chooseBarrel();
 
             if (barrel == null) {
-                System.err.println("[Gateway] Nenhum Barrel disponível. A aguardar reconexão...");
+                System.err.println("[Gateway] Nenhum Barrel disponível. A aguardar reconexao...");
                 Thread.sleep(2000);
                 continue;
             }
 
             try {
                 barrel.putNew(url);
-                System.out.println("[Gateway] URL enviada ao Barrel para indexação: " + url);
+                System.out.println("[Gateway] URL enviada ao Barrel para indexacao: " + url);
                 enviado = true;
 
             } catch (Exception e) {
@@ -170,7 +170,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         try {
             return barrel.getPagesLinkingTo(url);
         } catch (Exception e) {
-            throw new RemoteException("[Gateway] Erro ao obter páginas que apontam para " + url + ": " + e.getMessage());
+            throw new RemoteException("[Gateway] Erro ao obter paginas que apontam para " + url + ": " + e.getMessage());
         }
     }
 
@@ -181,7 +181,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                 int gatewayPort = 8186;
                 Registry reg = LocateRegistry.createRegistry(gatewayPort);
                 reg.rebind("gateway", gateway);
-                System.out.println("[Gateway] Servidor registado na porta " + gatewayPort);
+                System.out.println("[Gateway] Registada na porta " + gatewayPort);
                 break;
             } catch (RemoteException e) {
                 System.err.println("[Gateway] Erro ao iniciar: " + e.getMessage());
