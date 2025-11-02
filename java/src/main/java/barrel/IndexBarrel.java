@@ -15,7 +15,7 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
 
 
     public static void main(String[] args) {
-        System.setProperty("java.rmi.server.hostname", "192.168.1.183");
+        System.setProperty("java.rmi.server.hostname", "192.168.1.66");
         try {
             int port = 8183; // valor por defeito
             if (args.length > 0) {

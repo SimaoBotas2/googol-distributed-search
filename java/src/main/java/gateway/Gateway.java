@@ -13,7 +13,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
     private volatile Manager manager;
 
     public Gateway() throws RemoteException {
-        super();
+        super(8186);
 
         // Thread que mantém Manager e Barrels sincronizados
         Thread monitorThread = new Thread(() -> {
@@ -23,7 +23,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                     if (manager == null) {
                         try {
                             System.out.println("[Gateway] A tentar ligar ao Manager na porta 8182...");
-                            Registry regManager = LocateRegistry.getRegistry("192.168.56.1", 8182);
+                            Registry regManager = LocateRegistry.getRegistry("192.168.1.66", 8182);
                             manager = (Manager) regManager.lookup("manager");
                             System.out.println("[Gateway] Ligado ao Manager!");
                         } catch (Exception e) {
@@ -211,6 +211,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
     public static void main(String[] args) throws InterruptedException {
         while (true) {
             try {
+                System.setProperty("java.rmi.server.hostname", "192.168.1.183");
                 Gateway gateway = new Gateway();
                 int gatewayPort = 8186;
                 Registry reg = LocateRegistry.createRegistry(gatewayPort);

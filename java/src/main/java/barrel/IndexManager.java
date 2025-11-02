@@ -20,7 +20,7 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
     public static void main(String[] args) {
         try {
             // Define o IP público/local desta máquina
-            System.setProperty("java.rmi.server.hostname", "192.168.56.1"); 
+            System.setProperty("java.rmi.server.hostname", "192.168.1.66"); 
 
             // Criação e exportação do Manager remoto
             IndexManager manager = new IndexManager();
@@ -48,7 +48,7 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
             // Lista de IPs a verificar — inclui o local e o remoto
             List<String> ips = Arrays.asList(
-                "localhost", // pc portatil
+                "192.168.1.66", // pc portatil
                 "192.168.1.183" // pc fixo
             );
 
@@ -88,7 +88,7 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
                         localReg.rebind("index", barrel);
                         System.out.println("[IndexManager] Barrel LOCAL criado na porta " + p);
 
-                        String barrelId = "localhost:" + p;
+                        String barrelId = "192.168.1.66:" + p;
                         synchronized (manager.activeBarrels) {
                             if (!manager.activeBarrels.contains(barrelId)) {
                                 manager.activeBarrels.add(barrelId);
@@ -97,6 +97,12 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
                     } catch (ExportException ex) {
                         System.err.println("[IndexManager] Já existe barrel local na porta " + p);
+                        String barrelId = "192.168.1.66:" + p;
+                        synchronized (manager.activeBarrels) {
+                            if (!manager.activeBarrels.contains(barrelId)) {
+                                manager.activeBarrels.add(barrelId);
+                            }
+                        }
                     } catch (RemoteException ex) {
                         System.err.println("[IndexManager] Erro ao criar barrel local na porta " + p + ": " + ex.getMessage());
                     }
@@ -123,7 +129,7 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
 
     private void startMonitoring(List<Integer> ports) {
         // IPs a monitorizar
-        List<String> ips = Arrays.asList("192.168.1.183", "localhost");
+        List<String> ips = Arrays.asList("192.168.1.183", "192.168.1.66");
 
         new Thread(() -> {
             Set<String> activeIds = new HashSet<>(activeBarrels);

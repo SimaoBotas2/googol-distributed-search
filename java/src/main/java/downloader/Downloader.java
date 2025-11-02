@@ -10,10 +10,10 @@ import org.jsoup.select.*;
 
 public class Downloader {
     public static void main(String[] args) {
-
         boolean debug = false; //para comentarios de debug
+        System.setProperty("java.rmi.server.hostname", "192.168.1.183");
         try {
-            Registry regManager = LocateRegistry.getRegistry("192.168.56.1", 8182);
+            Registry regManager = LocateRegistry.getRegistry("192.168.1.66", 8182);
             Manager manager = (Manager) regManager.lookup("manager");
 
             // Obter lista de Barrels ativos
@@ -92,6 +92,7 @@ public class Downloader {
                                     System.out.println("[DEBUG] Enviado para o barrel" + b);
                                 } catch (Exception e) {
                                     System.err.println("[Downloader] Falha ao enviar para Barrel: " + e.getMessage());
+                                    System.out.println("BARREL : " + b);        
                                 }
                             }
 
