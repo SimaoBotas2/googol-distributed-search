@@ -13,7 +13,7 @@ public class Downloader {
 
         boolean debug = false; //para comentarios de debug
         try {
-            Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
+            Registry regManager = LocateRegistry.getRegistry("192.168.56.1", 8182);
             Manager manager = (Manager) regManager.lookup("manager");
 
             // Obter lista de Barrels ativos

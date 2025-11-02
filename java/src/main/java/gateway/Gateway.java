@@ -23,7 +23,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                     if (manager == null) {
                         try {
                             System.out.println("[Gateway] A tentar ligar ao Manager na porta 8182...");
-                            Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
+                            Registry regManager = LocateRegistry.getRegistry("192.168.56.1", 8182);
                             manager = (Manager) regManager.lookup("manager");
                             System.out.println("[Gateway] Ligado ao Manager!");
                         } catch (Exception e) {

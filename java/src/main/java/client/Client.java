@@ -18,7 +18,7 @@ public class Client {
     public static void main(String[] args) {
         try {
             // Ligação à Gateway
-            Registry registry = LocateRegistry.getRegistry("localhost", 8186);
+            Registry registry = LocateRegistry.getRegistry("192.168.56.1", 8186);
             gateway = (GatewayInterface) registry.lookup("gateway");
 
             Scanner scanner = new Scanner(System.in);
