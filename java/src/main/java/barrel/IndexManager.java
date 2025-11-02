@@ -137,6 +137,8 @@ private void sincronizarBarrel(int novoBarrelPort) {
             Map<String, Object> dadosSinc = barrelExistente.getSynchronizationData();
             
             // Sincronizar o novo barrel
+            // Usar o unchecked porque o compilador nao consegue confirmar se o type cast está certo, e por isso da warning
+            // Se realmente nao estiver, vai dar throw a um error
             @SuppressWarnings("unchecked")
             Map<String, List<String>> indice = (Map<String, List<String>>) dadosSinc.get("index");
             @SuppressWarnings("unchecked")

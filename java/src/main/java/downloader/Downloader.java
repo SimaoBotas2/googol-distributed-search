@@ -168,7 +168,6 @@ private static List<Index> atualizarBarrels(Manager manager) {
     return ativos;
 }
 
-
 private static String limparUrl(String url){
     if(url == null) return null;
     //Urls que o downloader deve ignorar, pois nao possuem conteúdo
