@@ -51,7 +51,7 @@ public class Client {
                     String query = scanner.nextLine();
                     List<String> results = gateway.search(query);
                     if (results.isEmpty()) {
-                        System.out.println("[Client] Não houve resultados.");
+                        System.out.println("[Client] Nao houve resultados.");
                     } else {
                         int pageSize = 10;
                         int index = 0;
@@ -104,12 +104,12 @@ public class Client {
                         List<String> ranking = gateway.getPagesOrderedByInLinks(pageSize, offset);
                         if (ranking == null || ranking.isEmpty()) {
                             if (offset == 0) {
-                                System.out.println("[Client] Não existem páginas registadas.");
+                                System.out.println("[Client] Nao existem paginas registadas.");
                             }
                             break;
                         }
                         System.out.println("\n[Client] Top " + (offset + 1) + "--" + (offset + ranking.size())
-                                + " páginas por número de ligações recebidas (backlinks):");
+                                + " paginas por número de ligacoes recebidas (backlinks):");
                         int pos = offset + 1;
                         for (String page : ranking) {
                             System.out.println(pos++ + ". " + page);

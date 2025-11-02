@@ -13,7 +13,6 @@ public class Downloader {
 
         boolean debug = false; //para comentarios de debug
         try {
-            // Conectar ao IndexManager (porta fixa 8182, por agora )
             Registry regManager = LocateRegistry.getRegistry("localhost", 8182);
             Manager manager = (Manager) regManager.lookup("manager");
 
@@ -110,7 +109,7 @@ public class Downloader {
                         String absUrl = link.attr("abs:href");
                         absUrl = limparUrl(absUrl);
 
-                        if (absUrl != null ||  !alreadySeen.contains(absUrl)) {
+                        if (absUrl != null &&  !alreadySeen.contains(absUrl)) {
                             alreadySeen.add(absUrl);
                             outlinks.add(absUrl);
                             for (Index b : barrels) {
