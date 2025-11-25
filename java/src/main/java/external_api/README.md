@@ -1,9 +1,11 @@
 // META 2: APIS EXTERNAS
 // Módulo responsável pela integração com serviços externos
 //
-// INTEGRAÇÕES:
-// 1. Hacker News API
-// 2. OpenAI API
+// STATUS: 🚧 Não iniciado
+//
+// INTEGRAÇÕES PLANEJADAS:
+// 1. Hacker News API - Top stories em tempo real
+// 2. OpenAI API - Análise e resumo de resultados
 //
 // HACKER NEWS API:
 // [ ] TODO: Cliente REST para Hacker News
@@ -36,9 +38,11 @@
 //   - summarize(results): String
 // }
 //
+// RESPONSÁVEL: Simão Carvalho
+//
 // PRÓXIMOS PASSOS:
 // 1. Implementar cliente Hacker News
 // 2. Implementar cliente OpenAI
-// 3. Integrar respostas
+// 3. Integrar respostas com controllers
 // 4. Adicionar cache
 // 5. Testes de API

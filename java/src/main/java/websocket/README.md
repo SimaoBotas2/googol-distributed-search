@@ -1,7 +1,9 @@
 // META 2: WEBSOCKETS
 // Módulo responsável pela comunicação em tempo real
 //
-// FUNCIONALIDADES:
+// STATUS: 🚧 Não iniciado
+//
+// FUNCIONALIDADES PLANEJADAS:
 // [ ] TODO: Setup WebSocket server
 // [ ] TODO: Handler para conexões
 // [ ] TODO: Broadcast de updates
@@ -31,9 +33,12 @@
 //   }
 // }
 //
+// RESPONSÁVEL: Simão Carvalho
+//
 // PRÓXIMOS PASSOS:
 // 1. Implementar WebSocket handler
-// 2. Criar eventos de update
-// 3. Implementar broadcast
+// 2. Criar eventos de update via RMI polling
+// 3. Implementar broadcast para clientes conectados
 // 4. Adicionar cliente JavaScript
-// 5. Testes de conexão
+// 5. Integrar com página de stats
+// 6. Testes de conexão e performance
