@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Erro - Googol</title>
+    <!-- TODO: Tiago - Adicionar CSS para página de erro -->
+</head>
+<body>
+    <!-- TODO: Tiago - Implementar layout de erro -->
+    
+    <h1>Erro</h1>
+    
+    <!-- TODO: Tiago - Exibir mensagem de erro -->
+    <div th:if="${error}">
+        <p th:text="${error}"></p>
+    </div>
+    
+    <!-- TODO: Tiago - Adicionar botão para voltar à página inicial -->
+    <a href="/">Voltar para a página inicial</a>

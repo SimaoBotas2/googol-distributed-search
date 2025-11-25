@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Indexar URL - Googol</title>
+    <!-- TODO: Tiago - Adicionar CSS -->
+</head>
+<body>
+    <!-- TODO: Tiago - Implementar navbar -->
+    
+    <h1>Indexar novo URL</h1>
+    
+    <!-- TODO: Tiago - Adicionar mensagem de sucesso/erro -->
+    <div th:if="${success}">
+        <p th:text="${success}"></p>
+    </div>
+    
+    <div th:if="${error}">
+        <p th:text="${error}"></p>
+    </div>
+    
+    <!-- TODO: Simão - Implementar formulário para indexar URL -->
+    <form method="post" th:action="@{/index}">
+        <label for="url">URL:</label>
+        <input type="text" id="url" name="url" placeholder="https://exemplo.com" required>
+        <button type="submit">Indexar</button>
+    </form>
+    
+    <!-- TODO: Tiago - Adicionar informações sobre como funciona o indexing -->
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Googol - Motor de Pesquisa</title>
+    <!-- TODO: Tiago - Adicionar CSS e design da página -->
+</head>
+<body>
+    <!-- TODO: Tiago - Implementar navbar com links -->
+    
+    <h1>Googol</h1>
+    <p>Motor de pesquisa distribuído</p>
+    
+    <!-- TODO: Tiago - Implementar formulário de pesquisa -->
+    <form method="post" th:action="@{/search}">
+        <input type="text" name="query" placeholder="Pesquisa..." required>
+        <button type="submit">Pesquisar</button>
+    </form>
+    
+    <!-- TODO: Tiago - Implementar links para outras páginas -->
+    <a href="/index">Indexar URL</a>
+    <a href="/stats">Estatísticas</a>
+    
+    <!-- TODO: Tiago - Implementar display de estatísticas do sistema -->
+</body>
+</html>

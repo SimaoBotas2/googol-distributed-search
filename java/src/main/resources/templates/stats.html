@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Estatísticas - Googol</title>
+    <!-- TODO: Tiago - Adicionar CSS para layout das estatísticas -->
+</head>
+<body>
+    <!-- TODO: Tiago - Implementar navbar -->
+    
+    <h1>Estatísticas do Sistema</h1>
+    
+    <!-- TODO: Simão - Implementar obtenção de estatísticas via RMI -->
+    <!-- TODO: Tiago - Implementar exibição das estatísticas -->
+    
+    <div th:if="${stats}">
+        <h2>Barrels</h2>
+        <div th:each="barrel : ${stats.barrels}">
+            <p th:text="'Barrel ' + ${barrel.id} + ': ' + ${barrel.pageCount} + ' páginas'"></p>
+        </div>
+        
+        <h2>Resumo</h2>
+        <p th:text="'Total de páginas: ' + ${stats.totalPages}"></p>
+        <p th:text="'Total de palavras-chave: ' + ${stats.totalKeywords}"></p>
+    </div>
+    
+    <!-- TODO: Simão - Adicionar atualização em tempo real via WebSocket -->
+</body>
+</html>
