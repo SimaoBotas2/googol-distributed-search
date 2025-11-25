@@ -1,0 +1,3 @@
+# Configuração do Gateway RMI
+gateway.host=localhost
+gateway.port=8186

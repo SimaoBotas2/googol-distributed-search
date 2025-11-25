@@ -2,9 +2,9 @@ package web.service;
 
 import gateway.GatewayInterface;
 import gateway.SystemStats;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import java.rmi.NotBoundException;
+import common.Config;
+
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -14,45 +14,67 @@ import java.util.Set;
 @Service
 public class RMIClientService {
     
-    @Value("${rmi.gateway.host:localhost}")
-    private String gatewayHost;
-    
-    @Value("${rmi.gateway.port:8186}")
-    private int gatewayPort;
-    
     private GatewayInterface gateway;
     
     public RMIClientService() {
-        // TODO: Simão - Conectar ao Gateway RMI na inicialização
+        try {
+            // Ler configuração do Config
+            String gatewayHost = Config.get("gateway.host");
+            int gatewayPort = Config.getInt("gateway.port", 8186);
+            
+            // Tentar conectar à Gateway uma vez
+            try {
+                System.out.println("[RMIClientService] A tentar ligar à Gateway (" + gatewayHost + ":" + gatewayPort + ")...");
+                Registry registry = LocateRegistry.getRegistry(gatewayHost, gatewayPort);
+                gateway = (GatewayInterface) registry.lookup("gateway");
+                System.out.println("[RMIClientService] Ligado à Gateway com sucesso!");
+            } catch (Exception e) {
+                System.err.println("[RMIClientService] Gateway indisponível na inicialização: " + e.getMessage());
+                gateway = null;
+            }
+        } catch (Exception e) {
+            System.err.println("[RMIClientService] Erro ao ler configuração: " + e.getMessage());
+            gateway = null;
+        }
     }
     
-    // TODO: Simão - Implementar pesquisa via RMI
     public List<String> search(String query) throws RemoteException {
-        return null;
+        if (gateway == null) {
+            throw new RemoteException("Gateway não conectada");
+        }
+        return gateway.search(query);
     }
     
-    // TODO: Simão - Implementar indexação de URL via RMI
     public void indexURL(String url) throws RemoteException, InterruptedException {
-        // TODO: Simão - Implementação
+        if (gateway == null) {
+            throw new RemoteException("Gateway não conectada");
+        }
+        gateway.addUrl(url);
     }
-    
-    // TODO: Simão - Obter páginas ordenadas por inlinks
+
     public List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException {
-        return null;
+        if (gateway == null) {
+            throw new RemoteException("Gateway não conectada");
+        }
+        return gateway.getPagesOrderedByInLinks(limit, offset);
     }
     
-    // TODO: Simão - Obter páginas que apontam para uma URL
+
     public Set<String> getPagesLinkingTo(String url) throws RemoteException {
-        return null;
+        if (gateway == null) {
+            throw new RemoteException("Gateway não conectada");
+        }
+        return gateway.getPagesLinkingTo(url);
     }
     
-    // TODO: Simão - Obter estatísticas do sistema
     public SystemStats getSystemStats() throws RemoteException {
-        return null;
+        if (gateway == null) {
+            throw new RemoteException("Gateway não conectada");
+        }
+        return gateway.getSystemStats();
     }
     
-    // TODO: Simão - Verificar se está conectado
     public boolean isConnected() {
-        return false;
+        return gateway != null;
     }
 }

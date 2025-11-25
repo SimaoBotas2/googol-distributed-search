@@ -2,6 +2,7 @@ package client;
 
 import gateway.GatewayInterface;
 import gateway.SystemStats;
+import common.Config;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
@@ -15,11 +16,15 @@ public class Client {
 
     public static void main(String[] args) {
         try {
+            // Ler configuração do Config
+            String gatewayHost = Config.get("gateway.host");
+            int gatewayPort = Config.getInt("gateway.port", 8186);
+            
             // Tentativas de ligação à Gateway
             while (gateway == null) {
                 try {
-                    System.out.println("[Client] A tentar ligar à Gateway (192.168.1.183:8186)...");
-                    Registry registry = LocateRegistry.getRegistry("192.168.1.183", 8186);
+                    System.out.println("[Client] A tentar ligar à Gateway (" + gatewayHost + ":" + gatewayPort + ")...");
+                    Registry registry = LocateRegistry.getRegistry(gatewayHost, gatewayPort);
                     gateway = (GatewayInterface) registry.lookup("gateway");
                     System.out.println("[Client] Ligado à Gateway com sucesso!");
                 } catch (Exception e) {

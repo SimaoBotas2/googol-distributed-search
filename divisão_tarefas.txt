@@ -1,27 +1,52 @@
-Membro A
+META 2 - PROGRESSO
 
-1. Interface Web principal  -  Página de pesquisa com Thymeleaf/FastAPI
-2. Templates de resultados  -  Mostrar título, URL, citação para cada resultado
-3. Paginação (10 em 10)  -  Navegação entre páginas de resultados
-4. Integração Hacker News  -  Buscar "top stories" com termos da pesquisa
-5. README e documentação  -  Instruções de instalação e execução
-6. Testes de interface  -   Validar fluxo de pesquisa web 
+=== MEMBRO A (Tiago) - Frontend/UI ===
 
-Membro B
+1. Interface Web principal - Página de pesquisa com Thymeleaf  [ TODO ]
+2. Templates de resultados - Mostrar URL, título, snippet  [ TODO ]
+3. Paginação (10 em 10) - Navegação entre páginas  [ TODO ]
+4. Estilização CSS - Design responsivo  [ TODO ]
+5. Integração Hacker News - Buscar top stories  [ TODO ]
+6. README e documentação - Instruções de instalação  [ TODO ]
 
-1. WebSockets tempo real -  atualizações em tempo real das estatisticas
-2.  Integração Open Ai  -  análise contexto nos resultados
-3.  Ligacao RPC/RMI  -  conectar frontend web ao servico da meta 1
-4.  Controller MVC   -  logica backend dos controllers
-5.   Indexação recursiva UI  -  interface para crawler automatico
-6.  Estatisticas em tempo real  -  pagina com info de barrels,  pesquisas, tempos
+=== MEMBRO B (Simão) - Backend/RMI ===
 
+1. RMI Bridge Service (RMIClientService)  [ ✅ CONCLUÍDO ]
+   - Constructor conecta ao Gateway
+   - search() implementado
+   - indexURL() implementado
+   - getPagesOrderedByInLinks() implementado
+   - getPagesLinkingTo() implementado
+   - getSystemStats() implementado
+   - isConnected() implementado
+   - Tratamento de erros (RemoteException)
 
+2. SearchController - Endpoints  [ 🚧 EM ANDAMENTO ]
+   - POST /search - [ TODO ]
+   - POST /index - [ TODO ]
+   - GET /stats - [ TODO ]
 
-Final
+3. Integração OpenAI - Análise de resultados  [ TODO ]
 
-Arquitetura MVC  spring/fastAPI  -  definir estrutura completa
-Integracao final frontend e backend  -  juntar todas as componentes
-Testes completos do sistema web  -  validar toda a funcionalidade
-Relatorio final meta 2  
-Deploy e configuração
+4. WebSockets tempo real - Stats updates  [ TODO ]
+
+5. Indexação recursiva UI - Interface crawler  [ TODO ]
+
+=== ARQUITETURA ===
+
+Spring Boot + Thymeleaf + RMI + WebSockets  [ ✅ Configurado ]
+- pom.xml com dependências  [ ✅ ]
+- application.properties RMI config  [ ✅ ]
+- RMIClientService (wrapper RMI)  [ ✅ ]
+- SearchController (stubs)  [ ✅ ]
+- Templates HTML (stubs)  [ ✅ ]
+
+=== PRÓXIMAS ETAPAS ===
+
+1. Simão: Implementar endpoints POST /search, POST /index, GET /stats
+2. Tiago: Implementar GET / (home), GET /index (form)
+3. Tiago: Estilização CSS de todos os templates
+4. Ambos: Testes de integração
+5. Simão: WebSockets para stats em tempo real
+6. Ambos: Integração APIs externas
+7. Ambos: Deploy e testes finais

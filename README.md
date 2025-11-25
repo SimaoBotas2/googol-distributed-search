@@ -1,7 +1,21 @@
 # SD-Googol — Sistema Distribuído de Indexação
 
 Projeto desenvolvido para a unidade curricular **Sistemas Distribuídos**.  
-Implementa um motor de indexação de páginas web em Java RMI, com múltiplos componentes distribuídos entre **duas máquinas**.
+Implementa um motor de indexação de páginas web em Java RMI, com interface web Spring Boot.
+
+## 📋 Status do Projeto
+
+### Meta 1 - ✅ CONCLUÍDA
+- Barrels, Gateway, Manager, Downloaders implementados
+- Sistema distribuído RMI funcional
+- Cliente CLI funcionando
+
+### Meta 2 - 🚧 EM DESENVOLVIMENTO
+- Spring Boot web framework configurado
+- RMI bridge (RMIClientService) implementado ✅
+- Controllers estruturados (stubs com TODOs)
+- Templates HTML criados (stubs com TODOs)
+- Faltam: implementar endpoints, estilização, WebSockets
 
 ---
 
