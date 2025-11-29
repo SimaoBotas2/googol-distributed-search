@@ -17,61 +17,87 @@ public class RMIClientService {
     private GatewayInterface gateway;
     
     public RMIClientService() {
+        gateway = null;
+        
+        // Ler configuração do Config
+        String gatewayHost = Config.get("gateway.host");
+        if (gatewayHost == null || gatewayHost.isEmpty()) {
+            gatewayHost = "localhost";  // Fallback para localhost
+            System.out.println("[RMIClientService] gateway.host nao configurado, usando localhost");
+        }
+        int gatewayPort = Config.getInt("gateway.port", 8186);
+        
+        // Tentar conectar à Gateway uma vez
+        System.out.println("[RMIClientService] A tentar ligar à Gateway (" + gatewayHost + ":" + gatewayPort + ")...");
         try {
-            // Ler configuração do Config
-            String gatewayHost = Config.get("gateway.host");
-            int gatewayPort = Config.getInt("gateway.port", 8186);
-            
-            // Tentar conectar à Gateway uma vez
-            try {
-                System.out.println("[RMIClientService] A tentar ligar à Gateway (" + gatewayHost + ":" + gatewayPort + ")...");
-                Registry registry = LocateRegistry.getRegistry(gatewayHost, gatewayPort);
-                gateway = (GatewayInterface) registry.lookup("gateway");
-                System.out.println("[RMIClientService] Ligado à Gateway com sucesso!");
-            } catch (Exception e) {
-                System.err.println("[RMIClientService] Gateway indisponível na inicialização: " + e.getMessage());
-                gateway = null;
-            }
+            Registry registry = LocateRegistry.getRegistry(gatewayHost, gatewayPort);
+            gateway = (GatewayInterface) registry.lookup("gateway");
+            System.out.println("[RMIClientService] ✅ Conectado à Gateway com sucesso!");
         } catch (Exception e) {
-            System.err.println("[RMIClientService] Erro ao ler configuração: " + e.getMessage());
+            System.err.println("[RMIClientService] ❌ ERRO ao conectar à Gateway: " + e.getMessage());
+            e.printStackTrace();
             gateway = null;
         }
     }
     
     public List<String> search(String query) throws RemoteException {
+        System.out.println("[RMIClientService] search chamado com query: " + query);
         if (gateway == null) {
+            System.err.println("[RMIClientService] ERROR: Gateway é null!");
             throw new RemoteException("Gateway não conectada");
         }
-        return gateway.search(query);
+        System.out.println("[RMIClientService] A chamar gateway.search()...");
+        List<String> results = gateway.search(query);
+        System.out.println("[RMIClientService] gateway.search() retornou " + results.size() + " resultados");
+        return results;
     }
     
     public void indexURL(String url) throws RemoteException, InterruptedException {
+        System.out.println("[RMIClientService] indexURL chamado com URL: " + url);
         if (gateway == null) {
+            System.err.println("[RMIClientService] ERROR: Gateway é null!");
             throw new RemoteException("Gateway não conectada");
         }
+        System.out.println("[RMIClientService] A chamar gateway.addUrl()...");
         gateway.addUrl(url);
+        System.out.println("[RMIClientService] gateway.addUrl() completado");
     }
 
     public List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException {
+        System.out.println("[RMIClientService] getPagesOrderedByInLinks chamado com limit=" + limit + ", offset=" + offset);
         if (gateway == null) {
+            System.err.println("[RMIClientService] ERROR: Gateway é null!");
             throw new RemoteException("Gateway não conectada");
         }
-        return gateway.getPagesOrderedByInLinks(limit, offset);
+        System.out.println("[RMIClientService] A chamar gateway.getPagesOrderedByInLinks()...");
+        List<String> results = gateway.getPagesOrderedByInLinks(limit, offset);
+        System.out.println("[RMIClientService] gateway.getPagesOrderedByInLinks() retornou " + results.size() + " páginas");
+        return results;
     }
     
 
     public Set<String> getPagesLinkingTo(String url) throws RemoteException {
+        System.out.println("[RMIClientService] getPagesLinkingTo chamado com URL: " + url);
         if (gateway == null) {
+            System.err.println("[RMIClientService] ERROR: Gateway é null!");
             throw new RemoteException("Gateway não conectada");
         }
-        return gateway.getPagesLinkingTo(url);
+        System.out.println("[RMIClientService] A chamar gateway.getPagesLinkingTo()...");
+        Set<String> results = gateway.getPagesLinkingTo(url);
+        System.out.println("[RMIClientService] gateway.getPagesLinkingTo() retornou " + results.size() + " páginas");
+        return results;
     }
     
     public SystemStats getSystemStats() throws RemoteException {
+        System.out.println("[RMIClientService] getSystemStats chamado");
         if (gateway == null) {
+            System.err.println("[RMIClientService] ERROR: Gateway é null!");
             throw new RemoteException("Gateway não conectada");
         }
-        return gateway.getSystemStats();
+        System.out.println("[RMIClientService] A chamar gateway.getSystemStats()...");
+        SystemStats stats = gateway.getSystemStats();
+        System.out.println("[RMIClientService] gateway.getSystemStats() completado com sucesso");
+        return stats;
     }
     
     public boolean isConnected() {

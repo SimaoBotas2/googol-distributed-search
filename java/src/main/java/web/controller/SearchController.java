@@ -1,9 +1,13 @@
 package web.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import gateway.SystemStats;
 import web.service.RMIClientService;
 
 @Controller
@@ -19,12 +23,20 @@ public class SearchController {
     }
     
     @PostMapping("/search")
-    public String search(@RequestParam String query, 
-                        @RequestParam(defaultValue = "1") int page,
-                        Model model) {
-        // TODO: Simão - Implementar pesquisa (POST /search)
-        // TODO: Tiago - Implementar paginação (por agora retorna tudo)
-        // TODO: Tiago - Implementar paginação de 10 em 10
+    public String search(@RequestParam String query, Model model) {
+        try{
+            List<String> results = rmiService.search(query);
+            int totalResults = results.size();
+            
+            model.addAttribute("query", query);
+            model.addAttribute("results", results);
+            model.addAttribute("totalResults", totalResults);
+            model.addAttribute("currentPage", 1);
+            model.addAttribute("totalPages", 1);
+        } catch (Exception e) {
+            model.addAttribute("error", "Erro ao realizar pesquisa: " + e.getMessage());
+        }
+        // TODO: Tiago - Implementar paginação e ordenação dos resultados
         return "results";
     }
     
@@ -36,14 +48,27 @@ public class SearchController {
     
     @PostMapping("/index")
     public String indexURL(@RequestParam String url, Model model) {
-        // TODO: Simão - Implementar indexação (POST /index)
-        return "index-url";
+        try{ //nao tenho de fazer confirmações aqui, apenas no backend
+            rmiService.indexURL(url);
+            model.addAttribute("message", "URL indexada com sucesso: " + url);
+            return "index-url";
+        } catch (Exception e) {
+            model.addAttribute("error", "Erro ao indexar URL: " + e.getMessage());
+            return "index-url";
+        }
     }
     
     @GetMapping("/stats")
     public String stats(Model model) {
-        // TODO: Simão - Página de estatísticas (GET /stats)
+        try{
+        SystemStats stats = rmiService.getSystemStats();
+        model.addAttribute("stats", stats);     
         return "stats";
+        } catch (Exception e) {
+            model.addAttribute("error", "Erro ao obter estatísticas: " + e.getMessage());
+            return "stats";
+        }
+
     }
     
     @GetMapping("/error")

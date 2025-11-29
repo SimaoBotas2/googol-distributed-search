@@ -1,5 +1,5 @@
 package barrel;
-
+import java.io.Serial;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
@@ -8,6 +8,7 @@ import common.Config;
 
 public class IndexManager extends UnicastRemoteObject implements Manager {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<String> activeBarrels = new ArrayList<>();
 

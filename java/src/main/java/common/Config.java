@@ -8,9 +8,10 @@ public class Config {
     private static final Properties props = new Properties();
 
     static {
-        try (InputStream input = ClassLoader.getSystemResourceAsStream("config.properties")) {
+        try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("config.properties")) {
             if (input != null) {
                 props.load(input);
+                System.out.println("[Config] Carregado config.properties com sucesso!");
             } else {
                 System.err.println("[Config] config.properties nao encontrado no classpath!");
             }
@@ -20,11 +21,20 @@ public class Config {
     }
 
     public static String get(String key) {
-        return props.getProperty(key);
+        String value = props.getProperty(key);
+        if (value == null) {
+            System.out.println("[Config] AVISO: Chave '" + key + "' nao encontrada!");
+        }
+        return value;
     }
 
     public static int getInt(String key, int def) {
-        try { return Integer.parseInt(props.getProperty(key)); }
+        try { 
+            String value = props.getProperty(key);
+            if (value == null) return def;
+            return Integer.parseInt(value); 
+        }
         catch (Exception e) { return def; }
     }
 }
+
