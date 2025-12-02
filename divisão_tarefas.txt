@@ -50,3 +50,5 @@ Spring Boot + Thymeleaf + RMI + WebSockets  [ ✅ Configurado ]
 5. Simão: WebSockets para stats em tempo real
 6. Ambos: Integração APIs externas
 7. Ambos: Deploy e testes finais
+
+---------
