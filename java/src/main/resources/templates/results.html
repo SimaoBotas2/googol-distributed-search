@@ -2,36 +2,65 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="'Resultados: ' + ${query}">Resultados</title>
-    <!-- TODO: Tiago - Adicionar CSS -->
+    <title>Resultados da Pesquisa</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        .result {
+            margin-bottom: 25px;
+        }
+        .result-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a0dab;
+        }
+        .result-url {
+            color: #006621;
+            font-size: 14px;
+        }
+        .snippet {
+            font-size: 15px;
+            color: #444;
+        }
+        .pagination {
+            margin-top: 30px;
+        }
+        .pagination a {
+            margin: 0 8px;
+            text-decoration: none;
+            font-weight: bold;
+            color: #4285F4;
+        }
+    </style>
 </head>
+
 <body>
-    <!-- TODO: Tiago - Implementar navbar com pesquisa rápida -->
-    
-    <h1>Resultados para: <span th:text="${query}"></span></h1>
-    
-    <!-- TODO: Tiago - Mostrar número de resultados encontrados -->
-    <p th:text="'Encontrados ' + ${totalResults} + ' resultados'"></p>
-    
-    <!-- TODO: Tiago - Implementar lista de resultados com título, URL e citação -->
-    <div th:if="${totalResults > 0}">
-        <ul>
-            <li th:each="result : ${results}">
-                <a th:href="${result}" th:text="${result}" target="_blank"></a>
-                <!-- TODO: Tiago - Adicionar título e citação aqui -->
-            </li>
-        </ul>
-    </div>
-    
-    <!-- TODO: Tiago - Implementar mensagem de "nenhum resultado encontrado" -->
-    <div th:if="${totalResults == 0}">
-        <p>Nenhum resultado encontrado</p>
-    </div>
-    
-    <!-- TODO: Tiago - Implementar paginação (10 em 10) com navegação entre páginas -->
-    <div th:if="${totalResults > 0}">
-        <p>Página <span th:text="${currentPage}"></span> de <span th:text="${totalPages}"></span></p>
-        <!-- TODO: Tiago - Adicionar botões "Anterior" e "Próxima" -->
-    </div>
+
+<h2>Resultados para: "<span th:text="${query}"></span>"</h2>
+
+<div th:if="${results.size() == 0}">
+    <p>Nenhum resultado encontrado.</p>
+</div>
+
+<div th:each="r : ${results}" class="result">
+
+    <a th:href="${r.url}" class="result-title" th:text="${r.title}"></a><br>
+    <span class="result-url" th:text="${r.url}"></span><br>
+    <p class="snippet" th:text="${r.snippet}"></p>
+
+</div>
+
+<div class="pagination">
+    <a th:if="${page > 0}" 
+       th:href="@{/search(query=${query}, page=${page - 1})}">Anterior</a>
+
+    <a th:if="${hasNext}" 
+       th:href="@{/search(query=${query}, page=${page + 1})}">Próxima</a>
+</div>
+
 </body>
 </html>
+

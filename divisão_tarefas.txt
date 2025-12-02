@@ -2,7 +2,7 @@ META 2 - PROGRESSO
 
 === MEMBRO A (Tiago) - Frontend/UI ===
 
-1. Interface Web principal - Página de pesquisa com Thymeleaf  [ TODO ]
+1. Interface Web principal - Página de pesquisa com Thymeleaf  [ ✅ CONCLUÍDO ]
 2. Templates de resultados - Mostrar URL, título, snippet  [ TODO ]
 3. Paginação (10 em 10) - Navegação entre páginas  [ TODO ]
 4. Estilização CSS - Design responsivo  [ TODO ]
@@ -44,7 +44,7 @@ Spring Boot + Thymeleaf + RMI + WebSockets  [ ✅ Configurado ]
 === PRÓXIMAS ETAPAS ===
 
 1. Simão: Implementar endpoints POST /search, POST /index, GET /stats
-2. Tiago: Implementar GET / (home), GET /index (form)
+2. Tiago: Implementar GET / (home) [ ✅ ], GET /index (form)
 3. Tiago: Estilização CSS de todos os templates
 4. Ambos: Testes de integração
 5. Simão: WebSockets para stats em tempo real

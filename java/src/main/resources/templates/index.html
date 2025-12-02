@@ -3,24 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <title>Googol - Motor de Pesquisa</title>
-    <!-- TODO: Tiago - Adicionar CSS e design da página -->
+    <style>
+        body {
+            background-color: #fafafa;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        .container {
+            margin-top: 120px;
+        }
+
+        h1 {
+            font-size: 50px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .search-box input {
+            width: 350px;
+            height: 35px;
+            padding: 5px 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .search-box button {
+            height: 39px;
+            padding: 0 15px;
+            font-size: 16px;
+            border: none;
+            background-color: #4285F4;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .search-box button:hover {
+            background-color: #3367D6;
+        }
+
+        .links {
+            margin-top: 30px;
+            font-size: 16px;
+        }
+
+        .links a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #4285F4;
+            font-weight: bold;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
+
 <body>
-    <!-- TODO: Tiago - Implementar navbar com links -->
-    
-    <h1>Googol</h1>
-    <p>Motor de pesquisa distribuído</p>
-    
-    <!-- TODO: Tiago - Implementar formulário de pesquisa -->
-    <form method="post" th:action="@{/search}">
-        <input type="text" name="query" placeholder="Pesquisa..." required>
-        <button type="submit">Pesquisar</button>
-    </form>
-    
-    <!-- TODO: Tiago - Implementar links para outras páginas -->
-    <a href="/index">Indexar URL</a>
-    <a href="/stats">Estatísticas</a>
-    
-    <!-- TODO: Tiago - Implementar display de estatísticas do sistema -->
+    <div class="container">
+
+        <h1>Googol</h1>
+        <p>Motor de pesquisa distribuído</p>
+
+        <form class="search-box" action="/search" method="post">
+            <input type="text" name="query" placeholder="Pesquisa..." required>
+            <button type="submit">Pesquisar</button>
+        </form>
+
+        <div class="links">
+            <a href="/index-url">Indexar URL</a>
+            <a href="/stats">Estatísticas</a>
+        </div>
+    </div>
 </body>
 </html>
