@@ -2,82 +2,132 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Googol - Motor de Pesquisa</title>
     <style>
-        body {
-            background-color: #fafafa;
-            font-family: Arial, Helvetica, sans-serif;
+        * {
             margin: 0;
             padding: 0;
-            text-align: center;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .container {
-            margin-top: 120px;
+            text-align: center;
+            background: white;
+            padding: 60px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
         }
 
         h1 {
-            font-size: 50px;
-            font-weight: bold;
-            color: #333;
+            font-size: 56px;
+            font-weight: 900;
+            color: #667eea;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .search-box input {
-            width: 350px;
-            height: 35px;
-            padding: 5px 10px;
+            width: 100%;
+            max-width: 400px;
+            height: 44px;
+            padding: 10px 16px;
             font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
         }
 
         .search-box button {
-            height: 39px;
-            padding: 0 15px;
+            height: 44px;
+            padding: 0 24px;
             font-size: 16px;
+            font-weight: 600;
             border: none;
-            background-color: #4285F4;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .search-box button:hover {
-            background-color: #3367D6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-box button:active {
+            transform: translateY(0);
         }
 
         .links {
-            margin-top: 30px;
-            font-size: 16px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .links a {
-            margin: 0 15px;
+            padding: 10px 20px;
             text-decoration: none;
-            color: #4285F4;
-            font-weight: bold;
+            color: #667eea;
+            font-weight: 600;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 14px;
         }
 
         .links a:hover {
-            text-decoration: underline;
+            background-color: #667eea;
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
     </style>
 </head>
-
 <body>
     <div class="container">
-
         <h1>Googol</h1>
-        <p>Motor de pesquisa distribuído</p>
+        <p>🌐 Motor de pesquisa distribuído</p>
 
         <form class="search-box" action="/search" method="post">
             <input type="text" name="query" placeholder="Pesquisa..." required>
-            <button type="submit">Pesquisar</button>
+            <button type="submit">🔍 Pesquisar</button>
         </form>
 
         <div class="links">
-            <a href="/index-url">Indexar URL</a>
-            <a href="/stats">Estatísticas</a>
+            <a href="/index">📄 Indexar URL</a>
+            <a href="/stats">📊 Estatísticas</a>
         </div>
     </div>
 </body>
