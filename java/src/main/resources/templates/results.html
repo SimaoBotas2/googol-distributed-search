@@ -41,11 +41,11 @@
 
 <h2>Resultados para: "<span th:text="${query}"></span>"</h2>
 
-<div th:if="${results.size() == 0}">
+<div th:if="${results == null or results.size() == 0}">
     <p>Nenhum resultado encontrado.</p>
 </div>
 
-<div th:each="r : ${results}" class="result">
+<div th:if="${results != null and results.size() > 0}" th:each="r : ${results}" class="result">
 
     <a th:href="${r.url}" class="result-title" th:text="${r.title}"></a><br>
     <span class="result-url" th:text="${r.url}"></span><br>
@@ -54,11 +54,21 @@
 </div>
 
 <div class="pagination">
-    <a th:if="${page > 0}" 
-       th:href="@{/search(query=${query}, page=${page - 1})}">Anterior</a>
+    <form th:if="${page > 1}" method="post" action="/search" style="display:inline;">
+        <input type="hidden" name="query" th:value="${query}">
+        <input type="hidden" name="page" th:value="${page - 1}">
+        <input type="hidden" name="size" value="10">
+        <button type="submit">← Anterior</button>
+    </form>
 
-    <a th:if="${hasNext}" 
-       th:href="@{/search(query=${query}, page=${page + 1})}">Próxima</a>
+    <span style="margin: 0 10px;">Página <span th:text="${page}"></span></span>
+
+    <form th:if="${hasNext}" method="post" action="/search" style="display:inline;">
+        <input type="hidden" name="query" th:value="${query}">
+        <input type="hidden" name="page" th:value="${page + 1}">
+        <input type="hidden" name="size" value="10">
+        <button type="submit">Próxima →</button>
+    </form>
 </div>
 
 </body>

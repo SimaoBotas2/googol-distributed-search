@@ -148,8 +148,8 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
     }
 
     @Override
-    public List<String> search(String query) throws RemoteException {
-        if (query == null || query.isBlank()) return new ArrayList<>();
+    public SearchResult search(String query, int limit, int offset) throws RemoteException {
+        if (query == null || query.isBlank()) return new SearchResult(new ArrayList<>(), 0);
         String[] terms = query.trim().toLowerCase().split("\\s+");
         Set<String> deduped = new LinkedHashSet<>();
 
@@ -165,7 +165,22 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
                 }
             }
         }
-        return new ArrayList<>(deduped);
+
+        // Total de matches (antes da paginação)
+        int totalMatches = deduped.size();
+
+        // Aplicar offset e limit
+        List<String> results = new ArrayList<>(deduped);
+        int startIdx = Math.min(offset, results.size());
+        int endIdx = Math.min(startIdx + limit, results.size());
+        
+        if (startIdx >= results.size()) {
+            return new SearchResult(new ArrayList<>(), totalMatches);
+        }
+        
+        // Converter subList para ArrayList para ser serializável em RMI
+        List<String> pageResults = new ArrayList<>(results.subList(startIdx, endIdx));
+        return new SearchResult(pageResults, totalMatches);
     }
 
     @Override

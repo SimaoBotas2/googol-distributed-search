@@ -60,7 +60,8 @@ public class Client {
                 } else if (option.equals("2")) {
                     System.out.print("[Client] Introduza as palavras para pesquisar (separadas por espaço): ");
                     String query = scanner.nextLine();
-                    List<String> results = gateway.search(query);
+                    gateway.SearchResult result = gateway.search(query, Integer.MAX_VALUE, 0);
+                    List<String> results = result.getResults();
                     if (results.isEmpty()) {
                         System.out.println("[Client] Nao houve resultados.");
                     } else {

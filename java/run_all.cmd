@@ -5,20 +5,25 @@ cd /d "%~dp0"
 
 REM Verifica se target\classes existe
 if not exist "target\classes" (
-    echo [ERROR] target\classes nao existe!
-    pause
-    exit /b 1
+    echo [ERROR] target\classes nao existe! A correr maven package...
+    mvn package -DskipTests -q
+)
+
+REM Copiar dependencias se nao existirem
+if not exist "target\lib" (
+    echo [DEBUG] A copiar dependencias...
+    mvn dependency:copy-dependencies -q
 )
 
 cd target\classes
 
 REM Build classpath com TODOS os .jars de target\lib
 set CP=.
-for %%f in (..\lib\*.jar) do (
+for /r "..\lib" %%f in (*.jar) do (
     set CP=!CP!;%%f
 )
 
-echo [DEBUG] Classpath inclui %s todos os jars de target\lib
+echo [DEBUG] Classpath incluindo todos os jars de target\lib
 
 echo [DEBUG] A iniciar Manager...
 start "Manager" cmd /k java -cp "%CP%" barrel.IndexManager

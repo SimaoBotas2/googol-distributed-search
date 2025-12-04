@@ -5,7 +5,7 @@ import java.util.*;
 
 public interface GatewayInterface extends Remote{
     void addUrl(String url) throws RemoteException,InterruptedException;
-    List<String> search(String word) throws RemoteException;
+    SearchResult search(String word, int limit, int offset) throws RemoteException;
     List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException;
     Set<String> getPagesLinkingTo(String url) throws RemoteException;
 

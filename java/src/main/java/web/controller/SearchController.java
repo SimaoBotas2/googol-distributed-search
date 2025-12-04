@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import gateway.SystemStats;
+import gateway.SearchResult;
 import web.service.RMIClientService;
 
 @Controller
@@ -24,16 +25,33 @@ public class SearchController {
 
     @PostMapping("/search")
     public String search(@RequestParam String query,
-                         @RequestParam(defaultValue = "0") int page,
+                         @RequestParam(defaultValue = "1") int page,
+                         @RequestParam(defaultValue = "10") int size,
                          Model model) {
 
+        System.out.println("[SearchController] ===== PESQUISA INICIADA =====");
+        System.out.println("[SearchController] Query: " + query + ", Page: " + page + ", Size: " + size);
+
+        // Inicializar com lista vazia por defeito
+        List<ResultItem> results = new ArrayList<>();
+        boolean hasNext = false;
+        boolean hasPrev = page > 1;
+        int totalMatches = 0;
+
         try {
-            // BACKEND devolve List<String> com URLs
-            List<String> urls = rmiService.search(query);
+            // Calcular offset da página (página começa em 1, mas offset começa em 0)
+            int offset = (page - 1) * size;
+            System.out.println("[SearchController] Offset calculado: " + offset);
+            
+            // BACKEND devolve SearchResult com URLs já paginados E total de matches
+            System.out.println("[SearchController] A chamar rmiService.searchPaginated()...");
+            SearchResult searchResult = rmiService.searchPaginated(query, size, offset);
+            System.out.println("[SearchController] rmiService.searchPaginated() retornou " + searchResult.getResults().size() + " URLs de " + searchResult.getTotalMatches() + " total");
+
+            totalMatches = searchResult.getTotalMatches();
+            List<String> urls = searchResult.getResults();
 
             // Converter para objetos visíveis no HTML
-            List<ResultItem> results = new ArrayList<>();
-
             for (String url : urls) {
                 ResultItem item = new ResultItem();
                 item.url = url;
@@ -42,24 +60,26 @@ public class SearchController {
                 results.add(item);
             }
 
-            // Paginação real
-            int pageSize = 10;
-            int start = page * pageSize;
-            int end = Math.min(start + pageSize, results.size());
-            boolean hasNext = end < results.size();
-
-            List<ResultItem> pageResults = results.subList(start, end);
-
-            model.addAttribute("query", query);
-            model.addAttribute("results", pageResults);
-            model.addAttribute("page", page);
-            model.addAttribute("hasNext", hasNext);
-            model.addAttribute("totalResults", results.size());
+            // Atributos para paginação no template
+            hasNext = (offset + size) < totalMatches;  // Há próxima página se não chegámos ao fim
+            System.out.println("[SearchController] Pesquisa completada com " + results.size() + " resultados, hasNext=" + hasNext);
 
         } catch (Exception e) {
+            System.err.println("[SearchController] ❌ ERRO na pesquisa: " + e.getMessage());
+            e.printStackTrace();
             model.addAttribute("error", "Erro ao realizar pesquisa: " + e.getMessage());
         }
 
+        model.addAttribute("query", query);
+        model.addAttribute("results", results);
+        model.addAttribute("page", page);
+        model.addAttribute("size", size);
+        model.addAttribute("hasNext", hasNext);
+        model.addAttribute("hasPrev", hasPrev);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("totalMatches", totalMatches);
+
+        System.out.println("[SearchController] ===== PESQUISA FINALIZADA =====");
         return "results";
     }
 
