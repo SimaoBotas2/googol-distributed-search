@@ -1,36 +1,59 @@
 package web.dto;
 
-import java.io.Serializable;
+import gateway.SystemStats;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * DTO para transmissão de estatísticas do sistema via WebSocket.
- * 
- * Campos:
- * - urlsIndexados: Total de URLs indexadas no sistema
- * - barrelsAtivos: Número de barrels online
- * - downloadersAtivos: Número de downloaders em execução
- * - urlsEmFila: URLs aguardando indexação
- * - uptimeSegundos: Uptime do sistema em segundos
- * - timestampMs: Timestamp Unix da atualização
- */
-public class StatsDto implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class StatsDTO {
+    
+    // Total de URLs processadas
+    public long totalPages;
+    
+    // Total de palavras processadas
+    public long totalKeywords;
+    
+    // Lista de barrels com informações sobre cada um
+    public List<BarrelDTO> barrels;
 
-    private int urlsIndexados;
-    private int barrelsAtivos;
-    private int downloadersAtivos;
-    private int urlsEmFila;
-    private long uptimeSegundos;
-    private long timestampMs;
+    /**
+     * Construtor privado - usar factory method fromSystemStats()
+     */
+    private StatsDTO() {
+        this.barrels = new ArrayList<>();
+    }
 
-    // TODO: Construtor vazio
-    // public StatsDto() {}
+    public static StatsDTO fromSystemStats(SystemStats systemStats) {
+        StatsDTO dto = new StatsDTO();
+        
+        if (systemStats == null) {
+            // Se systemStats for null, retornar DTO vazio
+            dto.totalPages = 0;
+            dto.totalKeywords = 0;
+            return dto;
+        }
+        
+        // Mapear os campos do SystemStats para o DTO
+        dto.totalPages = systemStats.totalUrls;
+        dto.totalKeywords = systemStats.totalPalavras;
+        
+        // Converter o mapa de tamanhos por barrel para lista de BarrelDTO
+        if (systemStats.tamanhoPorBarrel != null && !systemStats.tamanhoPorBarrel.isEmpty()) {
+            systemStats.tamanhoPorBarrel.forEach((barrelName, keywordCount) -> {
+                BarrelDTO barrelDTO = new BarrelDTO();
+                barrelDTO.id = barrelName;
+                barrelDTO.totalKeywords = keywordCount;
+                dto.barrels.add(barrelDTO);
+            });
+        }
+        
+        return dto;
+    }
 
-    // TODO: Construtor completo
-    // public StatsDto(int urlsIndexados, int barrelsAtivos, ...) { ... }
-
-    // TODO: Getters e setters
-    // public int getUrlsIndexados() { ... }
-    // public void setUrlsIndexados(int urlsIndexados) { ... }
-    // ... resto dos getters/setters
+    public static class BarrelDTO {
+        // ID/nome do barrel (ex: "localhost:8183")
+        public String id;
+        
+        // Número de palavras-chave indexadas neste barrel
+        public int totalKeywords;
+    }
 }

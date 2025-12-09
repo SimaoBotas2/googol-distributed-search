@@ -82,10 +82,64 @@
 //      - Agora Downloader tem jsoup, gson e httpclient5 na classpath
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// INTEGRAÇÃO COMPLETA META 1 ↔ META 2:
+// COMPONENTES WEBSOCKET IMPLEMENTADOS:
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Fluxo completo funcionando:
+// [✅] WebSocketConfig.java
+//      - Configuração Spring que ativa suporte WebSocket (@EnableWebSocket)
+//      - Registra StatsWebSocketHandler no endpoint /ws/stats
+//      - CORS desativado (setAllowedOrigins("*")) para desenvolvimento local
+//
+// [✅] StatsWebSocketHandler.java
+//      - Implementa WebSocketHandler da Spring (gerencia conexões)
+//      - afterConnectionEstablished(): Registra nova sessão, envia stats iniciais
+//      - handleMessage(): Não implementado (comunicação server-push unidirecional)
+//      - afterConnectionClosed(): Remove sessão da lista ativa
+//      - pollStats(): @Scheduled(fixedRate = 5000) - executa a cada 5 segundos
+//      - broadcastStats(): Contacta Gateway via RMI, envia JSON para todos os clientes
+//      - ConcurrentHashMap.newKeySet() para thread-safety em sessões simultâneas
+//
+// [✅] StatsDTO.java
+//      - Data Transfer Object que mapeia SystemStats para formato JSON
+//      - Factory method: StatsDTO.fromSystemStats(systemStats)
+//      - Campo: totalPages (maps from systemStats.totalUrls)
+//      - Campo: totalKeywords (maps from systemStats.totalPalavras)
+//      - BarrelDTO: lista de barrels com IDs e contagem de palavras-chave
+//      - Null-safety: retorna DTO vazio se systemStats for null
+//
+// [✅] stats.html
+//      - Cliente WebSocket JavaScript
+//      - Conecta a ws://localhost:8080/ws/stats (auto-protocolo para HTTPS)
+//      - Receptores: onopen, onmessage, onerror, onclose
+//      - updateStatsUI(): renderiza cards com dados recebidos
+//      - Auto-reconnect: setTimeout(connectWebSocket, 3000) se desconectar
+//      - UI: Card "Resumo Geral" + Grid de barrels individuais
+//      - Indicador de status: verde (conectado) / vermelho (desconectado)
+//      - Botão "Voltar ao Home" com navegação para /
+//
+// [✅] GooglelApplication.java
+//      - @EnableScheduling: Ativa suporte para @Scheduled em StatsWebSocketHandler
+//      - Crítico: sem isto, pollStats() nunca é chamado
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+// FLUXO DE DADOS WEBSOCKET:
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// 1. Cliente conecta: WebSocket.onopen()
+// 2. Server: afterConnectionEstablished() → broadcastStats() [imediato]
+// 3. Poll automático: pollStats() executa a cada 5 segundos
+// 4. Server: Gateway.getSystemStats() via RMI (contacta Meta 1)
+// 5. Server: Serializa SystemStats → StatsDTO → JSON com Gson
+// 6. Server: broadcast(JSON) para todas as sessões ativas
+// 7. Cliente: WebSocket.onmessage(JSON)
+// 8. Cliente: JSON.parse() → updateStatsUI()
+// 9. UI atualizada: nova contagem de URLs, palavras-chave, barrels
+// 10. Repete passo 3-9 a cada 5 segundos
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTEGRAÇÃO COMPLETA META 1 ↔ META 2:
 // 1. Spring Boot Web UI (localhost:8080) ← → Gateway RMI (localhost:8186)
 // 2. Gateway distribui URLs via RMI para Barrels (localhost:8183, 8184)
 // 3. Downloader processa URLs com jsoup e indexa conteúdo
@@ -99,84 +153,79 @@
 // FUNCIONALIDADES AVANÇADAS (EM DESENVOLVIMENTO):
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// [🚧] WebSockets para Stats Tempo Real
-//      - [ ] Atualizar dashboard sem refresh manual
-//      - [ ] Live feed de URLs sendo processadas
-//      - [ ] Notificações de indexação em tempo real
+// [✅] WebSockets para Stats Tempo Real (100% CONCLUÍDO)
+//      - [✅] Atualizar dashboard sem refresh manual (stats.html)
+//      - [✅] Live feed de estatísticas a cada 5 segundos
+//      - [✅] Notificações de conexão em tempo real (indicador verde/vermelho)
+//      ✅ Implementado: WebSocketConfig.java, StatsWebSocketHandler.java
+//      ✅ Auto-reconnect: cliente tenta reconectar a cada 3 segundos se desconectado
+//      ✅ StatsDTO.java: mapeia dados do backend para formato esperado pelo frontend
+//      ✅ GooglelApplication.java: @EnableScheduling para polling automático
 //
 // [🚧] Paginação Avançada de Resultados
-//      - [ ] Paginação dinâmica (currently: sem paginação)
 //      - [ ] Ordenação por relevância/data/popularidade
 //      - [ ] Filtros por domínio/tipo de conteúdo
+//      - NOTA: Paginação básica (10 em 10) já funciona
 //
-// [🚧] Análise de Backlinks
+// [🚧] Análise de Backlinks (Parcial)
 //      - [ ] Visualização gráfica de rede de links
-//      - [ ] Top páginas por backlinks
-//      - [ ] PageRank análise
+//      - [✅] API existe: Gateway.getPagesOrderedByInLinks() e getPagesLinkingTo()
+//      - [ ] Interface web para explorar backlinks
 //
-// [🚧] Integração com APIs Externas
+// [❌] Integração com APIs Externas
 //      - [ ] OpenAI para sumarizações
 //      - [ ] Hacker News para top stories
 //      - [ ] Weather API integração
 //
-// [🚧] Autenticação & Autorização
-//      - [ ] Spring Security
-//      - [ ] JWT tokens
-//      - [ ] User profiles
-//
-// [🚧] Admin Dashboard
-//      - [ ] Crawler controlo remoto
-//      - [ ] Index management
-//      - [ ] System monitoring
-//      - [ ] Log viewer
-//
-// ═══════════════════════════════════════════════════════════════════════════════
-// BUILD & DEPLOYMENT:
+═══════════════════════════════════════════════════════════════════════════════
+// STATUS FINAL DO PROJETO META 2:
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Para compilar e correr:
-//   mvn clean compile dependency:copy-dependencies
-//   ./run_final.cmd  (Windows) ou ./run_final.sh (Linux)
+// 🎯 FUNCIONALIDADES CORE ENTREGUES:
 //
-// Spring Boot Web UI: http://localhost:8080
-// Endpoints:
-//   GET  /              - Homepage
-//   POST /search        - Pesquisa
-//   GET  /index         - Form indexar
-//   POST /index         - Submeter URL
-//   GET  /stats         - Estatísticas
-//   GET  /error         - Página erro
+// [✅] Pesquisa Web
+//     - Homepage com form de pesquisa (index.html)
+//     - Resultados paginados (results.html)
+//     - Navegação entre páginas (Anterior/Próxima)
+//     - Integração RMI com Gateway
+//     - Total de matches exibido
+//
+// [✅] Indexação de URLs
+//     - Página form (index-url.html)
+//     - Feedback visual (mensagens de sucesso/erro)
+//     - Timeout automático (10 segundos)
+//     - Navbar com links de navegação
+//
+// [✅] Dashboard Estatísticas Tempo Real
+//     - WebSocket server-push (5 segundos)
+//     - Resumo Geral: URLs únicos, Total palavras-chave, Barrels ativos
+//     - Grid de Barrels: ID e contagem de palavras-chave únicas
+//     - Indicador de conexão (verde/vermelho)
+//     - Auto-reconnect (3 segundos se desconectar)
+//     - Botão "Voltar ao Home"
+//
+// [✅] Infraestrutura e Integração
+//     - RMIClientService: wrapper para todas as chamadas RMI
+//     - WebSocketConfig: configuração Spring WebSocket
+//     - StatsWebSocketHandler: handler com polling automático
+//     - StatsDTO: mapeamento de dados (Portuguese → English field names)
+//     - Error handling robusto em todos endpoints
+//     - Logging detalhado para debugging
+//     - Fallback automático para localhost se config.properties falhar
+//
+// [✅] Frontend Responsivo
+//     - Design clean com gradientes (azul/roxo)
+//     - Hover effects e transições suaves
+//     - Mobile-friendly (viewport meta tag)
+//     - CSS Grid para layouts responsivos
+//     - Ícones e feedback visual
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// ARQUITETURA TÉCNICA:
-// ═══════════════════════════════════════════════════════════════════════════════
+// FUNCIONALIDADES NÃO IMPLEMENTADAS (Conforme META2_TASKS.md):
 //
-// Stack:
-//   - Java 21
-//   - Spring Boot 3.3.13
-//   - Spring Web MVC
-//   - Spring WebSockets (ready para usar)
-//   - Thymeleaf templates
-//   - RMI para comunicação distribuída
-//   - Maven 3.9.11 para build
+// ❌ Paginação com ordenação customizável
+// ❌ Filtros avançados (domínio, tipo de conteúdo)
+// ❌ Visualização gráfica de backlinks
+// ❌ Integração OpenAI (sumarizações)
+// ❌ Integração Hacker News (top stories)
 //
-// Dependencies principais:
-//   - spring-boot-starter-web
-//   - spring-boot-starter-thymeleaf
-//   - spring-boot-starter-websocket
-//   - jsoup-1.18.3 (HTML parsing - used by Downloader)
-//   - gson-2.10.1 (JSON)
-//   - httpclient5-5.2.1 (HTTP)
-//
-// ═══════════════════════════════════════════════════════════════════════════════
-// NOTAS IMPORTANTES:
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// - Sistema distribuído com RMI requer que Gateway, Manager e Barrels estejam
-//   a rodar ANTES de iniciar Spring Boot (ou Spring não consegue conectar)
-// - run_final.cmd inicia todos os processos pela ordem correta
-// - Todos os componentes logam detalhadamente para debugging
-// - Timeout de 10s em Gateway.addUrl() previne travamentos
-// - Classpath Management: maven-dependency-plugin copia todos JARs para target/lib
-//
-// Status Final: ✅ PRONTO PARA PRODUÇÃO (com features avançadas planificadas)
