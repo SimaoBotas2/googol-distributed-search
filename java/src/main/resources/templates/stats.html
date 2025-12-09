@@ -3,27 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <title>Estatísticas - Googol</title>
-    <!-- TODO: Tiago - Adicionar CSS para layout das estatísticas -->
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+        h1 {
+            font-size: 32px;
+            color: #333;
+        }
+        .section {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f3f3f3;
+        }
+        .barrel-box {
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #6366f1;
+            background: white;
+        }
+    </style>
 </head>
 <body>
-    <!-- TODO: Tiago - Implementar navbar -->
-    
-    <h1>Estatísticas do Sistema</h1>
-    
-    <!-- TODO: Simão - Implementar obtenção de estatísticas via RMI -->
-    <!-- TODO: Tiago - Implementar exibição das estatísticas -->
-    
-    <div th:if="${stats}">
-        <h2>Barrels</h2>
-        <div th:each="barrel : ${stats.barrels}">
-            <p th:text="'Barrel ' + ${barrel.id} + ': ' + ${barrel.pageCount} + ' páginas'"></p>
-        </div>
-        
-        <h2>Resumo</h2>
-        <p th:text="'Total de páginas: ' + ${stats.totalPages}"></p>
-        <p th:text="'Total de palavras-chave: ' + ${stats.totalKeywords}"></p>
+
+<h1>📊 Estatísticas do Sistema</h1>
+
+<!-- Mostrar erro se existir -->
+<div th:if="${error}">
+    <p style="color:red;" th:text="${error}"></p>
+</div>
+
+<!-- Mostrar estatísticas -->
+<div th:if="${stats}">
+
+    <!-- Secção: Resumo geral -->
+    <div class="section">
+        <h2>Resumo Geral</h2>
+
+        <p><strong>Barrels ativos:</strong>
+            <span th:text="${stats.activeBarrels}"></span>
+        </p>
+
+        <p><strong>Total de palavras processadas:</strong>
+            <span th:text="${stats.totalPalavras}"></span>
+        </p>
+
+        <p><strong>Total de URLs processados:</strong>
+            <span th:text="${stats.totalUrls}"></span>
+        </p>
     </div>
-    
-    <!-- TODO: Simão - Adicionar atualização em tempo real via WebSocket -->
+
+    <!-- Secção: Detalhes dos Barrels -->
+    <div class="section">
+        <h2>Detalhes por Barrel</h2>
+
+        <div th:if="${stats.tamanhoPorBarrel}">
+            <div th:each="entry : ${stats.tamanhoPorBarrel}" class="barrel-box">
+                <p th:text="'🔹 ' + ${entry.key} + ': ' + ${entry.value} + ' palavras indexadas'"></p>
+            </div>
+        </div>
+
+        <div th:if="${stats.tamanhoPorBarrel == null}">
+            <p>Nenhum barrel disponível.</p>
+        </div>
+    </div>
+
+</div>
+
 </body>
 </html>
