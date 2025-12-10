@@ -25,14 +25,21 @@
             font-size: 15px;
             color: #444;
         }
+        .inlinks-btn {
+            font-size: 14px;
+            color: #555;
+            text-decoration: none;
+        }
         .pagination {
             margin-top: 30px;
         }
-        .pagination a {
-            margin: 0 8px;
-            text-decoration: none;
+        .pagination button {
+            padding: 6px 12px;
             font-weight: bold;
-            color: #4285F4;
+            border-radius: 5px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
         }
     </style>
 </head>
@@ -45,16 +52,24 @@
     <p>Nenhum resultado encontrado.</p>
 </div>
 
-<div th:if="${results != null and results.size() > 0}" th:each="r : ${results}" class="result">
+<div th:each="r : ${results}" class="result">
 
     <a th:href="${r.url}" class="result-title" th:text="${r.title}"></a><br>
     <span class="result-url" th:text="${r.url}"></span><br>
     <p class="snippet" th:text="${r.snippet}"></p>
 
+    <!-- Link para ver páginas que apontam para este URL -->
+    <a class="inlinks-btn"
+       th:href="@{/links(url=${r.url})}">
+        Ver páginas que apontam para este URL →
+    </a>
+
+    <br><br>
 </div>
 
 <div class="pagination">
-    <form th:if="${page > 1}" method="post" action="/search" style="display:inline;">
+
+    <form th:if="${hasPrev}" method="post" action="/search" style="display:inline;">
         <input type="hidden" name="query" th:value="${query}">
         <input type="hidden" name="page" th:value="${page - 1}">
         <input type="hidden" name="size" value="10">
@@ -69,8 +84,8 @@
         <input type="hidden" name="size" value="10">
         <button type="submit">Próxima →</button>
     </form>
+
 </div>
 
 </body>
 </html>
-
