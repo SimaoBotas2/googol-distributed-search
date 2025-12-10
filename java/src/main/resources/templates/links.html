@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Páginas que apontam para</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+        }
+
+        .url {
+            color: #006621;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .inlink {
+            margin-bottom: 18px;
+        }
+
+        a {
+            color: #1a0dab;
+            text-decoration: none;
+        }
+
+        .back {
+            margin-top: 30px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Páginas que apontam para:</h2>
+<p class="url" th:text="${url}"></p>
+
+<div th:if="${inLinks == null or inLinks.size() == 0}">
+    <p>Nenhuma página faz referência a este URL.</p>
+</div>
+
+<div th:each="link : ${inLinks}">
+    <div class="inlink">
+        <a th:href="${link}" th:text="${link}" target="_blank"></a>
+    </div>
+</div>
+
+<a href="/" class="back">← Voltar à pesquisa</a>
+
+</body>
+</html>

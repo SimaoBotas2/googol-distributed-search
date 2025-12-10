@@ -24,48 +24,36 @@ public class SearchController {
     }
 
     @PostMapping("/search")
-    public String search(@RequestParam String query,
-                         @RequestParam(defaultValue = "1") int page,
-                         @RequestParam(defaultValue = "10") int size,
-                         Model model) {
+    public String search(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
 
-        System.out.println("[SearchController] ===== PESQUISA INICIADA =====");
-        System.out.println("[SearchController] Query: " + query + ", Page: " + page + ", Size: " + size);
-
-        // Inicializar com lista vazia por defeito
         List<ResultItem> results = new ArrayList<>();
-        boolean hasNext = false;
-        boolean hasPrev = page > 1;
         int totalMatches = 0;
 
+        boolean hasPrev = page > 1;
+        boolean hasNext = false;
+
         try {
-            // Calcular offset da página (página começa em 1, mas offset começa em 0)
             int offset = (page - 1) * size;
-            System.out.println("[SearchController] Offset calculado: " + offset);
-            
-            // BACKEND devolve SearchResult com URLs já paginados E total de matches
-            System.out.println("[SearchController] A chamar rmiService.searchPaginated()...");
-            SearchResult searchResult = rmiService.searchPaginated(query, size, offset);
-            System.out.println("[SearchController] rmiService.searchPaginated() retornou " + searchResult.getResults().size() + " URLs de " + searchResult.getTotalMatches() + " total");
 
-            totalMatches = searchResult.getTotalMatches();
-            List<String> urls = searchResult.getResults();
+            SearchResult result = rmiService.searchPaginated(query, size, offset);
+            totalMatches = result.getTotalMatches();
 
-            // Converter para objetos visíveis no HTML
-            for (String url : urls) {
+            // Apenas URLs — SEM SNIPPETS, SEM TÍTULOS GERADOS
+            for (String url : result.getResults()) {
                 ResultItem item = new ResultItem();
                 item.url = url;
-                item.title = "Título ainda não disponível"; 
+                item.title = url;
                 item.snippet = "Snippet será gerado na integração OpenAI";
                 results.add(item);
             }
 
-            // Atributos para paginação no template
-            hasNext = (offset + size) < totalMatches;  // Há próxima página se não chegámos ao fim
-            System.out.println("[SearchController] Pesquisa completada com " + results.size() + " resultados, hasNext=" + hasNext);
+            hasNext = (offset + size) < totalMatches;
 
         } catch (Exception e) {
-            System.err.println("[SearchController] ❌ ERRO na pesquisa: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("error", "Erro ao realizar pesquisa: " + e.getMessage());
         }
@@ -74,12 +62,10 @@ public class SearchController {
         model.addAttribute("results", results);
         model.addAttribute("page", page);
         model.addAttribute("size", size);
-        model.addAttribute("hasNext", hasNext);
         model.addAttribute("hasPrev", hasPrev);
-        model.addAttribute("pageSize", size);
+        model.addAttribute("hasNext", hasNext);
         model.addAttribute("totalMatches", totalMatches);
 
-        System.out.println("[SearchController] ===== PESQUISA FINALIZADA =====");
         return "results";
     }
 
@@ -110,9 +96,18 @@ public class SearchController {
         return "stats";
     }
 
-    @GetMapping("/error")
-    public String error(Model model) {
-        return "error";
+    @GetMapping("/links")
+    public String showInLinks(@RequestParam String url, Model model) {
+        try {
+            var inLinks = rmiService.getPagesLinkingTo(url);
+            model.addAttribute("url", url);
+            model.addAttribute("inLinks", inLinks);
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Erro ao obter ligações: " + e.getMessage());
+        }
+
+        return "links";
     }
 
     public static class ResultItem {
