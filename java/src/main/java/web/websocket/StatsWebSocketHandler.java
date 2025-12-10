@@ -46,30 +46,14 @@ public class StatsWebSocketHandler implements WebSocketHandler {
         broadcastStats();
     }
 
-    /**
-     * Chamado quando o servidor recebe uma mensagem do cliente.
-     * 
-     * Nesta implementação, não processamos mensagens do cliente
-     * pois o servidor apenas envia estatísticas (comunicação unidirecional).
-     * 
-     * @param session A sessão que enviou a mensagem
-     * @param message A mensagem recebida
-     * @throws Exception Se houver erro ao processar
-     */
+
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         // Implementação vazia: o servidor envia dados, clientes apenas ouvem
         // Se no futuro houver necessidade de receber dados do cliente,
-        // adicione lógica aqui para processar as mensagens
+        // adicionar lógica aqui para processar as mensagens
     }
 
-    /**
-     * Chamado quando ocorre um erro na transmissão WebSocket.
-     * 
-     * @param session A sessão com erro
-     * @param exception A exceção que ocorreu
-     * @throws Exception Se houver erro ao processar a falha
-     */
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         System.err.println("Erro de transporte WebSocket na sessao " + session.getId() + 
@@ -77,14 +61,7 @@ public class StatsWebSocketHandler implements WebSocketHandler {
         exception.printStackTrace();
     }
 
-    /**
-     * Chamado quando a conexão WebSocket é fechada.
-     * Remove a sessão da lista de sessões ativas.
-     * 
-     * @param session A sessão fechada
-     * @param closeStatus Informação sobre o motivo do fechamento
-     * @throws Exception Se houver erro ao processar o fechamento
-     */
+    
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
         sessions.remove(session);
@@ -104,21 +81,7 @@ public class StatsWebSocketHandler implements WebSocketHandler {
         return false;
     }
 
-    /**
-     * Faz broadcast das estatísticas atuais para todas as sessões conectadas.
-     * 
-     * FLUXO:
-     * 1. Contacta o Gateway via RMI para obter SystemStats
-     * 2. Serializa SystemStats para JSON usando Gson
-     * 3. Cria uma TextMessage com o JSON
-     * 4. Itera todas as sessões ativas
-     * 5. Envia a mensagem para cada sessão aberta
-     * 6. Trata exceções graciosamente
-     * 
-     * TRATAMENTO DE ERROS:
-     * - IOException: Pode ocorrer se a conexão foi fechada entre verificações
-     * - Exceção do RMI: Contactar Gateway pode falhar se ele não está disponível
-     */
+
     private void broadcastStats() {
         try {
             // Obter as estatísticas atuais do sistema via RMI (contacta o Gateway)
@@ -157,20 +120,8 @@ public class StatsWebSocketHandler implements WebSocketHandler {
         }
     }
 
-    /**
-     * Tarefa agendada que executa a cada 5 segundos (5000 milissegundos).
-     * 
-     * FUNCIONAMENTO:
-     * - O Spring usa a anotação @Scheduled para chamar este método automaticamente
-     * - Ele é executado em uma thread de pool do Spring (não bloqueia outras operações)
-     * - Só faz broadcast se houver clientes conectados (otimização)
-     * 
-     * VANTAGEM DESTA ABORDAGEM:
-     * - Simples e automático: não requer código adicional de agendamento
-     * - Frequência configurável: pode ajustar o valor de fixedRate
-     * - Não causa picos de CPU se não há clientes conectados
-     */
-    @Scheduled(fixedRate = 5000)
+
+    @Scheduled(fixedRate = 3000)
     public void pollStats() {
         // Só fazer broadcast se houver clientes conectados
         // Evita contactar o Gateway desnecessariamente
