@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker News - Googol</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .message {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .story {
+            border: 1px solid #ddd;
+            border-left: 4px solid #ff6600;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .story:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .story-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .story-title a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .story-title a:hover {
+            text-decoration: underline;
+        }
+
+        .story-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .story-meta span {
+            margin-right: 15px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-link:hover {
+            background-color: #764ba2;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .story-title {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hacker News Top Stories</h1>
+        <div class="message" th:text="${message}"></div>
+
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+
+        <div th:if="${stories != null && stories.size() > 0}">
+            <div class="story" th:each="story : ${stories}">
+                <div class="story-title">
+                    <a th:href="${story.url}" target="_blank" th:text="${story.title}"></a>
+                </div>
+                <div class="story-meta">
+                    <span th:text="'Score: ' + ${story.score}"></span>
+                    <span th:text="'By: ' + ${story.by}"></span>
+                    <span th:text="'ID: ' + ${story.id}"></span>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${stories == null || stories.size() == 0}" class="empty-state">
+            <p>Nenhuma história encontrada ou erro ao buscar dados.</p>
+        </div>
+
+        <a href="/" class="back-link">← Voltar ao início</a>
+    </div>
+</body>
+</html>

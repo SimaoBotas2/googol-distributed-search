@@ -11,12 +11,28 @@ import org.springframework.web.bind.annotation.*;
 import gateway.SystemStats;
 import gateway.SearchResult;
 import web.service.RMIClientService;
+import web.service.SearchHistoryService;
+import web.service.ResponseTimeService;
+import external_api.HackerNewsClient;
+import external_api.OpenAiClient;
 
 @Controller
 public class SearchController {
 
     @Autowired
     private RMIClientService rmiService;
+
+    @Autowired
+    private SearchHistoryService searchHistoryService;
+
+    @Autowired
+    private ResponseTimeService responseTimeService;
+
+    @Autowired
+    private HackerNewsClient hackerNewsClient;
+
+    @Autowired
+    private OpenAiClient openAiClient;
 
     @GetMapping("/")
     public String home(Model model) {
@@ -30,7 +46,10 @@ public class SearchController {
             @RequestParam(defaultValue = "10") int size,
             Model model) {
 
-        long startTime = System.currentTimeMillis();  // Iniciar cronómetro
+        long startTime = System.currentTimeMillis();
+
+        // Registar pesquisa no histórico
+        searchHistoryService.recordSearch(query);
 
         List<ResultItem> results = new ArrayList<>();
         int totalMatches = 0;
@@ -44,12 +63,26 @@ public class SearchController {
             SearchResult result = rmiService.searchPaginated(query, size, offset);
             totalMatches = result.getTotalMatches();
 
-            // Apenas URLs — SEM SNIPPETS, SEM TÍTULOS GERADOS
+            // Para cada URL, gerar snippet com OpenAI
             for (String url : result.getResults()) {
                 ResultItem item = new ResultItem();
                 item.url = url;
                 item.title = url;
-                item.snippet = "Snippet será gerado na integração OpenAI";
+                
+                // Chamar OpenAI (assíncrono)
+                openAiClient.generateSnippet(url, query);
+                
+                // Aguardar um pouco para dar tempo ao OpenAI de processar
+                Thread.sleep(100);
+                
+                // Tentar buscar snippet armazenado
+                String snippet = openAiClient.getSnippet(url);
+                if (snippet != null && !snippet.isEmpty()) {
+                    item.snippet = snippet;
+                } else {
+                    item.snippet = "Snippet Indisponível, openAI erro";
+                }
+                
                 results.add(item);
             }
 
@@ -60,9 +93,12 @@ public class SearchController {
             model.addAttribute("error", "Erro ao realizar pesquisa: " + e.getMessage());
         }
 
-        long endTime = System.currentTimeMillis();  // Parar cronómetro
+        long endTime = System.currentTimeMillis();
         long responseTimeMs = endTime - startTime;
-        double responseTimeDecimas = responseTimeMs / 100.0;  // Converter para décimas de segundo
+        double responseTimeDecimas = responseTimeMs / 100.0;
+
+        // Guardar tempo de resposta
+        responseTimeService.recordResponseTime(query, responseTimeDecimas);
 
         model.addAttribute("query", query);
         model.addAttribute("results", results);
@@ -71,7 +107,7 @@ public class SearchController {
         model.addAttribute("hasPrev", hasPrev);
         model.addAttribute("hasNext", hasNext);
         model.addAttribute("totalMatches", totalMatches);
-        model.addAttribute("responseTime", responseTimeDecimas);  // Passar tempo para template
+        model.addAttribute("responseTime", responseTimeMs);
 
         return "results";
     }
@@ -97,10 +133,28 @@ public class SearchController {
         try {
             SystemStats stats = rmiService.getSystemStats();
             model.addAttribute("stats", stats);
+            
+            // Adicionar estatísticas de tempo de resposta
+            model.addAttribute("avgResponseTime", responseTimeService.getAverageResponseTime());
+            model.addAttribute("minResponseTime", responseTimeService.getMinResponseTime());
+            model.addAttribute("maxResponseTime", responseTimeService.getMaxResponseTime());
+            model.addAttribute("totalSearches", responseTimeService.getTotalSearches());
         } catch (Exception e) {
             model.addAttribute("error", "Erro ao obter estatísticas: " + e.getMessage());
         }
         return "stats";
+    }
+
+    @GetMapping("/hacker-news")
+    public String hackerNews(Model model) {
+        try {
+            var stories = hackerNewsClient.getTopStories();
+            model.addAttribute("stories", stories);
+            model.addAttribute("message", "Top " + stories.size() + " histórias de Hacker News");
+        } catch (Exception e) {
+            model.addAttribute("error", "Erro ao buscar histórias de Hacker News: " + e.getMessage());
+        }
+        return "hacker-news";
     }
 
     @GetMapping("/links")

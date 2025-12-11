@@ -192,6 +192,32 @@
         <div id="stats-container" class="stats-grid">
             <div class="loading">Carregando estatísticas...</div>
         </div>
+
+        <!-- CARD COM ESTATÍSTICAS DE TEMPO DE RESPOSTA -->
+        <div class="stats-grid">
+            <div class="card">
+                <h2>Estatísticas de Tempo de Resposta</h2>
+                <div class="stat-item">
+                    <span class="stat-label">Total de Pesquisas</span>
+                    <span class="stat-value" th:text="${totalSearches != null ? totalSearches : 0}">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tempo Médio</span>
+                    <span class="stat-value" th:text="${avgResponseTime != null ? #numbers.formatDecimal(avgResponseTime, 1, 2) : '0.00'}">0.00</span>
+                    <small style="color: #999; font-size: 0.8em;">décimas de segundo</small>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tempo Mínimo</span>
+                    <span class="stat-value" th:text="${minResponseTime != null ? #numbers.formatDecimal(minResponseTime, 1, 2) : '0.00'}">0.00</span>
+                    <small style="color: #999; font-size: 0.8em;">décimas de segundo</small>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tempo Máximo</span>
+                    <span class="stat-value" th:text="${maxResponseTime != null ? #numbers.formatDecimal(maxResponseTime, 1, 2) : '0.00'}">0.00</span>
+                    <small style="color: #999; font-size: 0.8em;">décimas de segundo</small>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>

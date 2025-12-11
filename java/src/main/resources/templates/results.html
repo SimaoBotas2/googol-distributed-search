@@ -49,7 +49,7 @@
 <h2>Resultados para: "<span th:text="${query}"></span>"</h2>
 
 <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #2196F3;">
-    <p style="margin: 5px 0;"><strong>Tempo de resposta:</strong> <span th:text="${#numbers.formatDecimal(responseTime, 1, 2)}" style="color: #2196F3; font-weight: bold; font-size: 16px;"></span> <strong>décimas de segundo</strong></p>
+    <p style="margin: 5px 0;"><strong>Tempo de resposta:</strong> <span th:text="${responseTime}" style="color: #2196F3; font-weight: bold; font-size: 16px;"></span> <strong>ms</strong></p>
 </div>
 
 <div th:if="${results == null or results.size() == 0}">
