@@ -1,162 +1,118 @@
-# SD-Googol — Sistema Distribuído de Indexação
+# Googol – Motor de Pesquisa Distribuído
 
-Projeto desenvolvido para a unidade curricular **Sistemas Distribuídos**.  
-Implementa um motor de indexação de páginas web em Java RMI, com interface web Spring Boot.
-
-## 📋 Status do Projeto
-
-### Meta 1 - ✅ CONCLUÍDA
-- Barrels, Gateway, Manager, Downloaders implementados
-- Sistema distribuído RMI funcional
-- Cliente CLI funcionando
-
-### Meta 2 - 🚧 EM DESENVOLVIMENTO
-- Spring Boot web framework configurado
-- RMI bridge (RMIClientService) implementado ✅
-- Controllers estruturados (stubs com TODOs)
-- Templates HTML criados (stubs com TODOs)
-- Faltam: implementar endpoints, estilização, WebSockets
+Googol é um motor de pesquisa distribuído desenvolvido no âmbito da unidade curricular de Sistemas Distribuídos. O sistema é composto por vários serviços cooperantes que executam as tarefas de download, indexação, armazenamento e pesquisa de páginas Web. O projeto inclui ainda uma interface Web construída em Spring Boot com Thymeleaf, bem como integrações externas.
 
 ---
 
-## Estrutura do Projeto
+## 1. Arquitetura Geral
+
+A arquitetura do Googol é baseada em quatro componentes principais:
+
+### 1. Downloader
+Responsável por obter páginas Web, extrair URLs e enviar conteúdos para os Barrels.
+
+### 2. Barrel
+Armazena índices locais, gere in-links, e responde a pedidos do Gateway (pesquisa, contagem de ligações e ordenações).
+
+### 3. Gateway
+Ponto centralizador que coordena a pesquisa, agrega resultados provenientes dos Barrels e expõe métodos remotos via RMI.
+
+### 4. Interface Web (Spring Boot)
+Aplicação Web que permite aos utilizadores:
+- Efetuar pesquisas
+- Ver resultados paginados
+- Consultar páginas que apontam para um determinado URL
+- Ver estatísticas do sistema (com WebSockets)
+- Consultar notícias do Hacker News
+- (Opcional) Obter snippets gerados através da API OpenAI
+
+---
+
+## 2. Funcionalidades Implementadas
+
+### Pesquisa
+- Pesquisa distribuída através do Gateway usando RMI.
+- Resultados ordenados por relevância (número de in-links).
+- Paginação automática de 10 em 10 resultados.
+- Geração de títulos básicos a partir do URL.
+- Link para visualização das páginas que referenciam cada URL (in-links).
+
+### Interface Web
+- Página inicial de pesquisa.
+- Página de resultados com paginação.
+- Página de estatísticas atualizadas em tempo real via WebSocket.
+- Página de visualização de in-links.
+- Página de notícias do Hacker News.
+
+### Integrações Externas
+- API Hacker News para exibir as principais notícias.
+- Integração OpenAI preparada para geração de snippets (ativação opcional).
+
+---
+
+## 3. Tecnologias Utilizadas
+
+- **Java 21**
+- **Spring Boot 3.3**
+- **Thymeleaf**
+- **RMI (Remote Method Invocation)**
+- **Jsoup (extração HTML)**
+- **HTTPClient 5**
+- **WebSockets (STOMP não utilizado; WebSocketHandler direto)**
+- **OpenAI API (opcional)**
+- **Maven**
+
+---
+
+## 4. Estrutura do Projeto (Java)
 
 java/
-├── src/
-│ └── main/java/
-│ ├── barrel/
-│ ├── client/
-│ ├── common/
+├── pom.xml
+├── src/main/java/
 │ ├── downloader/
+│ ├── barrel/
 │ ├── gateway/
-│ └── resources/
-│ └── config.properties
-├── target/
-│ ├── classes/ ← ficheiros compilados (.class)
-│ └── lib/jsoup-1.18.3.jar
-├── run_maquina1.cmd ← script da Máquina 1
-├── run_maquina2.cmd ← script da Máquina 2
-└── README.md
-
-
----
-
-## ⚙️ Pré-requisitos
-
-- **Java 17+** (JDK)
-- **Windows PowerShell ou CMD**
-- Conectividade entre as máquinas na mesma rede local
-- Firewalls desativadas (ou portas RMI abertas)
+│ ├── client/
+│ ├── external_api/
+│ │ ├── HackerNewsClient.java
+│ │ └── OpenAiClient.java
+│ └── web/
+│ ├── controller/
+│ ├── service/
+│ ├── websocket/
+│ ├── dto/
+│ └── GooglelApplication.java
+└── src/main/resources/
+├── templates/
+├── application.properties
 
 ---
 
-## 🌐 Endereços IP utilizados
+## 5. Como Executar
 
-| Máquina | IP Local | Função |
-|----------|-----------|--------|
-| **Máquina 1** | `192.168.1.183` | Gateway, Barrel 1, Downloader 1 |
-| **Máquina 2** | `192.168.1.66` | Manager, Barrel 2, Downloader 2, Client |
+### 1. Iniciar os serviços distribuídos
+Em terminais separados:
 
-> Estes valores estão definidos no ficheiro `config.properties`.  
-> Atualizar o valor dos ips no ficheiro para os valores reais.
+bash
+java downloader.Downloader
+java barrel.IndexBarrel
+java gateway.Gateway
+
+### 2. Iniciar a interface Web
+
+Entrar na pasta java/:
+
+mvn clean install
+java -jar target/sd-tutorial2-1.0-SNAPSHOT.jar
+
+
+A aplicação estará disponível em:
+
+http://localhost:8080
 
 ---
 
-## 🧩 Compilação manual
-
-Compilação manual:
-
-```bash
-cd java
-javac -cp "target\lib\jsoup-1.18.3.jar" -d target\classes src\main\java\**\*.java
-copy src\main\java\resources\config.properties target\classes\
-```
-
-
-O projeto inclui dois scripts .cmd para iniciar todos os serviços de cada máquina.
-
-**OBRIGATÓRIO**
-Rodar primeiro o script da máquina 2!!!!
-
-**Máquina 1:**
-Componentes:
-    Barrel 1
-    Downloader 1
-    Gateway
-
-Para rodar:
-
-```bash
-cd java
-run_maquina1.cmd
-```
-
-O script:
-- Compila o projeto
-- Copia o config.properties
-- Abre três janelas:
-    - Barrel1
-    - Downloader1
-    - Gateway
-
-
-**Máquina 2**
-Componentes:
-    Barrel 2
-    Manager
-    Downloader 2
-    Client
-
-O script:
-- Compila o projeto
-- Copia o config.properties
-- Abre quatro janelas:
-    - Barrel2
-    - Manager
-    - Downloader2
-    - Client
-
-
-**Testes e Verificação**
-
-O Manager deve listar ambos os barrels ativos:
-[IndexManager] Verificacao concluida. Barrels ativos:
-  -> 192.168.1.183:8183
-  -> 192.168.1.66:8184
-
-A gateway deve imprimir:
-[Gateway] Ligado ao Manager!
-[Gateway] Conectado ao Barrel em 192.168.1.183:8183
-[Gateway] Conectado ao Barrel em 192.168.1.66:8184
-
-O cliente deve ligar de imediato à gateway:
-[Client] A tentar ligar à Gateway (192.168.1.183:8186)...
-[Client] Ligado à Gateway com sucesso!
-
-
-**Execução manual**
-
-```bash
-cd target\classes
-
-:: Máquina 1
-java -cp ".;..\lib\jsoup-1.18.3.jar" barrel.IndexBarrel 1
-java -cp ".;..\lib\jsoup-1.18.3.jar" downloader.Downloader 1
-java -cp ".;..\lib\jsoup-1.18.3.jar" gateway.Gateway
-
-:: Máquina 2
-java -cp ".;..\lib\jsoup-1.18.3.jar" barrel.IndexBarrel 2
-java -cp ".;..\lib\jsoup-1.18.3.jar" barrel.IndexManager
-java -cp ".;..\lib\jsoup-1.18.3.jar" downloader.Downloader 2
-java -cp ".;..\lib\jsoup-1.18.3.jar" client.Client
-```
-
-**Encerramento**
-
-Para parar todos os serviços, fecha as janelas individuais (ou pressiona Ctrl + C em cada uma).
-
-
-👨‍💻 Créditos
+## 6. Créditos
 
 Projeto SD-Googol — desenvolvido por:
 - Simão Carvalho nº2021223055
