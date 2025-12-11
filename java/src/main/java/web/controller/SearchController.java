@@ -30,6 +30,8 @@ public class SearchController {
             @RequestParam(defaultValue = "10") int size,
             Model model) {
 
+        long startTime = System.currentTimeMillis();  // Iniciar cronómetro
+
         List<ResultItem> results = new ArrayList<>();
         int totalMatches = 0;
 
@@ -58,6 +60,10 @@ public class SearchController {
             model.addAttribute("error", "Erro ao realizar pesquisa: " + e.getMessage());
         }
 
+        long endTime = System.currentTimeMillis();  // Parar cronómetro
+        long responseTimeMs = endTime - startTime;
+        double responseTimeDecimas = responseTimeMs / 100.0;  // Converter para décimas de segundo
+
         model.addAttribute("query", query);
         model.addAttribute("results", results);
         model.addAttribute("page", page);
@@ -65,6 +71,7 @@ public class SearchController {
         model.addAttribute("hasPrev", hasPrev);
         model.addAttribute("hasNext", hasNext);
         model.addAttribute("totalMatches", totalMatches);
+        model.addAttribute("responseTime", responseTimeDecimas);  // Passar tempo para template
 
         return "results";
     }
