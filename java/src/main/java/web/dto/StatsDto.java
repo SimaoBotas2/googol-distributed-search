@@ -14,12 +14,16 @@ public class StatsDTO {
     
     // Lista de barrels com informações sobre cada um
     public List<BarrelDTO> barrels;
+    
+    // Top 10 pesquisas mais frequentes
+    public List<String> topSearches;
 
     /**
      * Construtor privado - usar factory method fromSystemStats()
      */
     private StatsDTO() {
         this.barrels = new ArrayList<>();
+        this.topSearches = new ArrayList<>();
     }
 
     public static StatsDTO fromSystemStats(SystemStats systemStats) {
@@ -29,6 +33,7 @@ public class StatsDTO {
             // Se systemStats for null, retornar DTO vazio
             dto.totalPages = 0;
             dto.totalKeywords = 0;
+            dto.topSearches = new ArrayList<>();
             return dto;
         }
         

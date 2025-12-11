@@ -11,6 +11,7 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.CloseStatus;
 import gateway.SystemStats;
 import web.service.RMIClientService;
+import web.service.SearchHistoryService;
 import web.dto.StatsDTO;
 
 import java.io.IOException;
@@ -22,6 +23,9 @@ public class StatsWebSocketHandler implements WebSocketHandler {
 
     @Autowired
     private RMIClientService rmiService;
+
+    @Autowired
+    private SearchHistoryService searchHistoryService;
 
     // ConcurrentHashMap garante que múltiplas threads podem adicionar/remover sessões
     // sem causar race conditions ou corrupção de dados
@@ -90,6 +94,11 @@ public class StatsWebSocketHandler implements WebSocketHandler {
             // Converter SystemStats para StatsDTO (formato esperado pelo cliente JavaScript)
             // SystemStats usa nomes em português, StatsDTO usa nomes em inglês
             StatsDTO statsDTO = StatsDTO.fromSystemStats(stats);
+            
+            // Adicionar top 10 pesquisas ao DTO
+            statsDTO.topSearches = searchHistoryService.getTop10Searches().stream()
+                    .map(sq -> sq.getCount() + "x \"" + sq.getQuery() + "\"")
+                    .collect(java.util.stream.Collectors.toList());
             
             // Converter o objeto Java para JSON string
             // Formato: { "totalPages": X, "totalKeywords": Y, "barrels": [...] }

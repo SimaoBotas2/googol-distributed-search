@@ -340,6 +340,18 @@
                 html += '</div></div>';
             }
 
+            // CARD COM TOP 10 PESQUISAS
+            // Mostrar as 10 pesquisas mais frequentes
+            if (stats.topSearches && stats.topSearches.length > 0) {
+                html += '<div class="card"><h2>Top 10 Pesquisas</h2><div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">';
+                
+                stats.topSearches.forEach((search, index) => {
+                    html += `<div style="padding: 10px; background: #f5f7ff; border-radius: 5px; text-align: center;"><strong>#${index + 1}</strong><br/>${search}</div>`;
+                });
+                
+                html += '</div></div>';
+            }
+
             // Atualizar o container com o novo HTML
             statsContainer.innerHTML = html;
         }
