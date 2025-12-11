@@ -14,7 +14,7 @@ import web.service.RMIClientService;
 import web.service.SearchHistoryService;
 import web.service.ResponseTimeService;
 import external_api.HackerNewsClient;
-import external_api.OpenAiClient;
+import external_api.OllamaClient;
 
 @Controller
 public class SearchController {
@@ -32,7 +32,7 @@ public class SearchController {
     private HackerNewsClient hackerNewsClient;
 
     @Autowired
-    private OpenAiClient openAiClient;
+    private OllamaClient ollamaClient;
 
     @GetMapping("/")
     public String home(Model model) {
@@ -69,15 +69,15 @@ public class SearchController {
                 item.url = url;
                 item.title = url;
                 
-                // Chamar OpenAI (assíncrono)
-                openAiClient.generateSnippet(url, query);
+                // Chamar Ollama (assíncrono)
+                ollamaClient.generateSnippet(url, query);
                 
                 // Tentar buscar snippet armazenado
-                String snippet = openAiClient.getSnippet(url);
+                String snippet = ollamaClient.getSnippet(url);
                 if (snippet != null && !snippet.isEmpty()) {
                     item.snippet = snippet;
                 } else {
-                    item.snippet = "Snippet Indisponível, openAI erro";
+                    item.snippet = "Snippet Indisponível, Ollama erro";
                 }
                 
                 results.add(item);

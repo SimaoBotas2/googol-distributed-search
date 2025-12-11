@@ -147,9 +147,12 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         }
     }
 
+
+    //TODO, a pesquisa tem de returnar por ordem de nr de inlinks
     @Override
     public SearchResult search(String query, int limit, int offset) throws RemoteException {
-        if (query == null || query.isBlank()) return new SearchResult(new ArrayList<>(), 0);
+        if (query == null || query.isBlank())
+             return new SearchResult(new ArrayList<>(), 0);
         String[] terms = query.trim().toLowerCase().split("\\s+");
         Set<String> deduped = new LinkedHashSet<>();
 
