@@ -72,9 +72,6 @@ public class SearchController {
                 // Chamar OpenAI (assíncrono)
                 openAiClient.generateSnippet(url, query);
                 
-                // Aguardar um pouco para dar tempo ao OpenAI de processar
-                Thread.sleep(100);
-                
                 // Tentar buscar snippet armazenado
                 String snippet = openAiClient.getSnippet(url);
                 if (snippet != null && !snippet.isEmpty()) {

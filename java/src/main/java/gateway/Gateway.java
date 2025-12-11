@@ -125,7 +125,7 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         while (!enviado && (System.currentTimeMillis() - startTime) < timeout) {
             Index barrel = chooseBarrel();
             if (barrel == null) {
-                System.err.println("[Gateway] ❌ Nenhum Barrel disponível. A aguardar reconexão...");
+                System.err.println("[Gateway] Nenhum Barrel disponível. A aguardar reconexão...");
                 Thread.sleep(2000);
                 continue;
             }
@@ -133,16 +133,16 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
             try {
                 System.out.println("[Gateway] A enviar URL ao Barrel: " + url);
                 barrel.putNew(url);
-                System.out.println("[Gateway] ✅ URL enviada ao Barrel para indexação: " + url);
+                System.out.println("[Gateway] URL enviada ao Barrel para indexação: " + url);
                 enviado = true;
             } catch (Exception e) {
-                System.err.println("[Gateway] ❌ Falha ao adicionar URL (" + url + "): " + e.getMessage());
+                System.err.println("[Gateway] Falha ao adicionar URL (" + url + "): " + e.getMessage());
                 Thread.sleep(timeWait);
             }
         }
         
         if (!enviado) {
-            System.err.println("[Gateway] ❌ TIMEOUT: Não foi possível enviar URL ao Barrel");
+            System.err.println("[Gateway] TIMEOUT: Não foi possível enviar URL ao Barrel");
             throw new RemoteException("Timeout ao enviar URL para Barrel");
         }
     }

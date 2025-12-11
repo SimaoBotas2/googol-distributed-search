@@ -37,18 +37,10 @@ public class OpenAiClient {
         this.httpClient = HttpClients.createDefault();
     }
 
-    /**
-     * Obter snippet armazenado para um URL
-     */
     public String getSnippet(String url) {
         return snippets.getOrDefault(url, null);
     }
 
-    /**
-     * Gerar snippet contextualizado para um URL dado
-     * NÃO-BLOQUEANTE: retorna imediatamente com placeholder
-     * OpenAI é chamado assincronamente em background
-     */
     public String generateSnippet(String url, String content) {
         // Se não há API key configurada, retornar placeholder
         if (apiKey == null || apiKey.isEmpty()) {
@@ -86,7 +78,6 @@ public class OpenAiClient {
             requestBody.addProperty("model", "gpt-4.1");
             requestBody.addProperty("input", prompt);
             requestBody.addProperty("max_output_tokens", 150);
-            requestBody.addProperty("temperature", 0.7);
 
             String jsonBody = gson.toJson(requestBody);
 
