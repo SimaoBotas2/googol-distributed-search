@@ -70,8 +70,6 @@ public class HackerNewsClient {
             System.err.println("Erro ao fetch top stories: " + e.getMessage());
         }
 
-        // Ordenar por score (descendente)
-        stories.sort((a, b) -> Integer.compare(b.getScore(), a.getScore()));
 
         return stories;
     }

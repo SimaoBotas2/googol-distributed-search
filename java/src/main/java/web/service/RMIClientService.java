@@ -98,6 +98,16 @@ public class RMIClientService {
         System.out.println("[RMIClientService] gateway.getSystemStats() completado com sucesso");
         return stats;
     }
+
+    public boolean checkUrlIndexed(String url) throws RemoteException {
+        System.out.println("[RMIClientService] checkUrlIndexed chamado com URL: " + url);
+        connectIfNeeded(true);
+        if (gateway == null) throw new RemoteException("Gateway não conectada");
+        System.out.println("[RMIClientService] A chamar gateway.checkUrlIndexed()...");
+        boolean indexed = gateway.checkUrlIndexed(url);
+        System.out.println("[RMIClientService] gateway.checkUrlIndexed() retornou: " + indexed);
+        return indexed;
+    }
     
     public boolean isConnected() {
         return gateway != null;

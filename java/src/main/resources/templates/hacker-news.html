@@ -80,6 +80,13 @@
             text-decoration: underline;
         }
 
+        .story-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
         .story-meta {
             font-size: 12px;
             color: #999;
@@ -102,6 +109,43 @@
 
         .back-link:hover {
             background-color: #764ba2;
+        }
+
+        .index-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #764ba2;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .index-btn:hover:not(:disabled) {
+            background-color: #8a5fb8;
+        }
+
+        .index-btn:disabled {
+            background-color: #4285F4;
+            cursor: default;
+            opacity: 1;
+        }
+
+        .index-btn:disabled:hover {
+            background-color: #4285F4;
+        }
+
+        .index-btn.success {
+            background-color: #4285F4;
+        }
+
+        .index-btn.success:hover {
+            background-color: #4285F4;
+            cursor: default;
         }
 
         .empty-state {
@@ -137,10 +181,13 @@
                 <div class="story-title">
                     <a th:href="${story.url}" target="_blank" th:text="${story.title}"></a>
                 </div>
-                <div class="story-meta">
-                    <span th:text="'Score: ' + ${story.score}"></span>
-                    <span th:text="'By: ' + ${story.by}"></span>
-                    <span th:text="'ID: ' + ${story.id}"></span>
+                <div class="story-footer">
+                    <div class="story-meta">
+                        <span th:text="'Score: ' + ${story.score}"></span>
+                        <span th:text="'By: ' + ${story.by}"></span>
+                        <span th:text="'ID: ' + ${story.id}"></span>
+                    </div>
+                    <button class="index-btn" th:attr="data-url=${story.url}" onclick="indexStory(this)">Indexar URL</button>
                 </div>
             </div>
         </div>
@@ -151,5 +198,104 @@
 
         <a href="/" class="back-link">← Voltar ao início</a>
     </div>
+
+    <script>
+        /**
+         * Verificar o estado de indexação de uma URL ao carregar a página
+         */
+        function checkUrlStatus(button) {
+            const url = button.getAttribute('data-url');
+            
+            console.log('[checkUrlStatus] Verificando status de:', url);
+            
+            fetch('/api/check-indexed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => {
+                console.log('[checkUrlStatus] Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('[checkUrlStatus] Response data:', data);
+                if (data.indexed) {
+                    console.log('[checkUrlStatus] URL está indexada, marcando botão como sucesso');
+                    button.textContent = 'Indexada';
+                    button.classList.add('success');
+                    button.disabled = true;
+                } else {
+                    console.log('[checkUrlStatus] URL não está indexada');
+                    button.textContent = 'Indexar URL';
+                }
+            })
+            .catch(error => {
+                console.error('[checkUrlStatus] Erro ao verificar status:', error);
+            });
+        }
+
+        /**
+         * Função para indexar uma URL
+         * Envia um pedido ao backend para que os barrels comecem a indexar a URL
+         */
+        function indexStory(button) {
+            const url = button.getAttribute('data-url');
+            
+            console.log('[indexStory] Indexando URL:', url);
+            
+            if (!url) {
+                alert('URL não encontrada');
+                return;
+            }
+
+            // Desabilitar o botão durante o processamento
+            button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = '⏳ Indexando...';
+
+            // Enviar pedido ao backend
+            fetch('/api/index-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => {
+                console.log('[indexStory] Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Erro ao indexar URL');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('[indexStory] Response data:', data);
+                button.textContent = '✓ Indexada';
+                button.classList.add('success');
+                button.disabled = true;
+            })
+            .catch(error => {
+                console.error('[indexStory] Erro:', error);
+                alert('Erro ao indexar a URL: ' + error.message);
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        }
+
+        // Verificar o estado de todas as URLs quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[DOMContentLoaded] Iniciando verificação de URLs...');
+            const buttons = document.querySelectorAll('.index-btn');
+            console.log('[DOMContentLoaded] Encontrados ' + buttons.length + ' botões para verificar');
+            buttons.forEach((button, index) => {
+                const url = button.getAttribute('data-url');
+                console.log('([DOMContentLoaded] Botão #' + (index + 1) + ' - Chamando checkUrlStatus para URL: ' + url);
+                checkUrlStatus(button);
+            });
+            console.log('[DOMContentLoaded] Verificação iniciada para todos os botões');
+        });
+    </script>
 </body>
 </html>

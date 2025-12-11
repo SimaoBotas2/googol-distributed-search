@@ -232,6 +232,30 @@ public class Gateway extends UnicastRemoteObject implements GatewayInterface {
         return stats;
     }
 
+    @Override
+    public boolean checkUrlIndexed(String url) throws RemoteException {
+        System.out.println("[Gateway] checkUrlIndexed chamado com URL: " + url);
+        synchronized (barrelMap) {
+            System.out.println("[Gateway] Verificando " + barrelMap.size() + " barrels...");
+            int barrelIndex = 0;
+            for (Index barrel : barrelMap.keySet()) {
+                barrelIndex++;
+                try {
+                    System.out.println("[Gateway]   Barrel #" + barrelIndex + " - A chamar isUrlIndexed()...");
+                    if (barrel.isUrlIndexed(url)) {
+                        System.out.println("[Gateway] URL ENCONTRADO no Barrel #" + barrelIndex + "!");
+                        return true;
+                    }
+                    System.out.println("[Gateway]   Barrel #" + barrelIndex + " - URL não encontrado");
+                } catch (Exception e) {
+                    System.err.println("[Gateway] Erro ao verificar URL no Barrel #" + barrelIndex + ": " + e.getMessage());
+                }
+            }
+        }
+        System.out.println("[Gateway] URL NÃO ENCONTRADO em nenhum barrel, retornando false");
+        return false;
+    }
+
     // ---------- MAIN ----------
     public static void main(String[] args) throws InterruptedException {
         while (true) {

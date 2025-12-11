@@ -8,7 +8,7 @@ public class Config {
     private static final Properties props = new Properties();
 
     static {
-        try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("config.properties")) {
+        try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("resources/config.properties")) {
             if (input != null) {
                 props.load(input);
                 System.out.println("[Config] Carregado config.properties com sucesso!");

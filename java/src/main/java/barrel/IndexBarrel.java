@@ -73,22 +73,27 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
 
     @Override
     public synchronized void putNew(String url) throws RemoteException {
+        System.out.println("[IndexBarrel] putNew() chamado com URL: " + url);
         String norm = normalizeUrl(url);
-        if(norm == null || norm.isEmpty())
+        System.out.println("[IndexBarrel] putNew() normalizado para: " + norm);
+        
+        if(norm == null || norm.isEmpty()) {
+            System.out.println("[IndexBarrel] putNew() URL normalizado é nulo/vazio, ignorando");
             return;
+        }
         
         if(visitedUrls.contains(norm)){
-            System.out.println("[IndexBarrel] putnew -> url ja visitado:" + norm);
+            System.out.println("[IndexBarrel] putNew -> url ja visitado:" + norm);
             return;
         }
 
         if (urlsToIndex.contains(norm)) {
-        System.out.println("[IndexBarrel] putNew -> ja na fila: " + norm);
-        return;
+            System.out.println("[IndexBarrel] putNew -> ja na fila: " + norm);
+            return;
         }
 
         urlsToIndex.add(norm);
-        System.out.println("[IndexBarrel] putNew -> URL adicionada à fila: " + url);
+        System.out.println("[IndexBarrel] putNew -> URL adicionada à fila: " + norm);
     }
 
     @Override
@@ -262,4 +267,14 @@ public synchronized Set<String> getPagesLinkingTo(String url) throws RemoteExcep
     return new HashSet<>(sources);
 }
 
+@Override
+public synchronized boolean isUrlIndexed(String url) throws RemoteException {
+    String normalizedUrl = normalizeUrl(url);
+    boolean found = normalizedUrl != null && visitedUrls.contains(normalizedUrl);
+    System.out.println("[IndexBarrel] isUrlIndexed('" + url + "') -> normalizado='" + normalizedUrl + "' -> found=" + found + " (total visitedUrls=" + visitedUrls.size() + ")");
+    if (visitedUrls.size() > 0 && visitedUrls.size() <= 10) {
+        System.out.println("[IndexBarrel]   visitedUrls contém: " + visitedUrls);
+    }
+    return found;
+}
 }

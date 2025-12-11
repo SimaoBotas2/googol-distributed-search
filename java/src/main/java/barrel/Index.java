@@ -23,7 +23,7 @@ public interface Index extends Remote {
     List<String> getPagesOrderedByInLinks(int limit, int offset) throws RemoteException;
     Set<String> getPagesLinkingTo(String url) throws RemoteException;
 
-
+    public boolean isUrlIndexed(String url) throws RemoteException;
 
     //para debugging, imprime as estatisticas do barrel
     public Map<String, List<String>> getIndexSnapshot() throws RemoteException;

@@ -2,6 +2,7 @@ package web.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -166,6 +167,45 @@ public class SearchController {
         }
 
         return "links";
+    }
+
+    @PostMapping("/api/index-url")
+    @ResponseBody
+    public Map<String, String> indexUrlApi(@RequestBody Map<String, String> request) {
+        String url = request.get("url");
+        Map<String, String> response = new java.util.HashMap<>();
+        
+        try {
+            rmiService.indexURL(url);
+            response.put("status", "success");
+            response.put("message", "URL indexada com sucesso");
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Erro ao indexar URL: " + e.getMessage());
+        }
+        
+        return response;
+    }
+
+    @PostMapping("/api/check-indexed")
+    @ResponseBody
+    public Map<String, Object> checkIndexedApi(@RequestBody Map<String, String> request) {
+        String url = request.get("url");
+        Map<String, Object> response = new java.util.HashMap<>();
+        
+        try {
+            // Usar o método da gateway para verificar se a URL está indexada
+            boolean indexed = rmiService.checkUrlIndexed(url);
+            
+            response.put("indexed", indexed);
+            response.put("status", "success");
+        } catch (Exception e) {
+            response.put("indexed", false);
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        
+        return response;
     }
 
     public static class ResultItem {

@@ -14,6 +14,20 @@
             font-family: Arial, sans-serif;
             margin: 30px;
         }
+        .home-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4285F4;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+        }
+        .home-btn:hover {
+            background-color: #357ae8;
+        }
         .result {
             margin-bottom: 25px;
         }
@@ -50,6 +64,8 @@
 </head>
 
 <body>
+
+<a href="/" class="home-btn">← Voltar ao Home</a>
 
 <h2>Resultados para: "<span th:text="${query}"></span>"</h2>
 
