@@ -122,10 +122,10 @@ public class RMIClientService {
             Registry registry = LocateRegistry.getRegistry(gatewayHost, gatewayPort);
             GatewayInterface candidate = (GatewayInterface) registry.lookup("gateway");
             gateway = candidate;
-            System.out.println("[RMIClientService] ✅ Conectado à Gateway com sucesso!");
+            System.out.println("[RMIClientService] Conectado à Gateway com sucesso!");
         } catch (Exception e) {
             if (force) {
-                System.err.println("[RMIClientService] ❌ ERRO ao conectar à Gateway: " + e.getMessage());
+                System.err.println("[RMIClientService] ERRO ao conectar à Gateway: " + e.getMessage());
             }
             gateway = null;
         }

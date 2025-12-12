@@ -113,6 +113,65 @@
             color: white;
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
+
+        .section-divider {
+            margin: 40px 0;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .backlinks-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .backlinks-form input {
+            width: 100%;
+            max-width: 400px;
+            height: 44px;
+            padding: 10px 16px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .backlinks-form input:focus {
+            border-color: #764ba2;
+        }
+
+        .backlinks-form button {
+            height: 44px;
+            padding: 0 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .backlinks-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(118, 75, 162, 0.4);
+        }
+
+        .backlinks-form button:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -129,6 +188,14 @@
             <a href="/index">Indexar URL</a>
             <a href="/stats">Estatísticas</a>
             <a href="/hacker-news">Hacker News</a>
+        </div>
+
+        <div class="section-divider">
+            <div class="section-title">Ver Backlinks de um URL</div>
+            <form class="backlinks-form" action="/links" method="get">
+                <input type="text" name="url" placeholder="Introduza o URL..." required>
+                <button type="submit">Procurar Backlinks</button>
+            </form>
         </div>
     </div>
 </body>
