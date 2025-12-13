@@ -130,7 +130,7 @@ public class StatsWebSocketHandler implements WebSocketHandler {
     }
 
 
-    @Scheduled(fixedRate = 3000)
+    @Scheduled(fixedRate = 500)
     public void pollStats() {
         // Só fazer broadcast se houver clientes conectados
         // Evita contactar o Gateway desnecessariamente

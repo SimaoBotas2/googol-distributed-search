@@ -185,7 +185,7 @@
             <div class="status disconnected" id="status">
                 Desconectado
             </div>
-            <a href="/" style="margin-top: 15px; display: inline-block; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 5px; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">Voltar ao Home</a>
+            <a href="/" style="margin-top: 15px; display: inline-block; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 5px; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">Voltar a Home</a>
         </header>
 
         <!-- CONTAINER PARA OS CARDS DE ESTATISTICAS -->
@@ -248,18 +248,6 @@
                 statusElement.classList.add('connected');
             };
 
-            /**
-             * Chamado quando o servidor envia uma mensagem.
-             * FORMATO DO JSON ESPERADO:
-             * {
-             *   "totalPages": 1500,
-             *   "totalKeywords": 45000,
-             *   "barrels": [
-             *     { "id": 1, "pageCount": 500 },
-             *     { "id": 2, "pageCount": 450 }
-             *   ]
-             * }
-             */
             ws.onmessage = function(event) {
                 try {
                     const stats = JSON.parse(event.data);
