@@ -73,7 +73,7 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
             manager = (Manager) reg.lookup("manager");
             System.out.println("[IndexBarrel] Conectado ao Manager em " + managerIp + ":" + managerPort);
         } catch (Exception e) {
-            System.err.println("[IndexBarrel] Aviso: Não consegui conectar ao Manager: " + e.getMessage());
+            System.err.println("[IndexBarrel] Aviso: Nao consegui conectar ao Manager: " + e.getMessage());
             manager = null;
         }
     }
