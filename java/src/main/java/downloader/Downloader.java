@@ -4,12 +4,32 @@ import barrel.Index;
 import barrel.Manager;
 import common.Config;
 import java.rmi.registry.*;
+import java.rmi.server.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
 
-public class Downloader {
+public class Downloader extends UnicastRemoteObject implements Manager.WorkAvailableListener {
+    
+    private static final long serialVersionUID = 1L;
+    
+    // Semáforo para controlar quando o Downloader deve processar URLs
+    // Iniciado com 1 para começar imediatamente
+    private static Semaphore workAvailable = new Semaphore(1);
+    
+    public Downloader() throws java.rmi.RemoteException {
+        super();
+    }
+    
+    @Override
+    public void onNewWorkAvailable() {
+        // Callback chamado pelo Manager quando há novo trabalho
+        workAvailable.release();
+        System.out.println("[Downloader] Novo URL disponivel!");
+    }
+    
     public static void main(String[] args) {
         boolean debug = false;
 
@@ -35,6 +55,11 @@ public class Downloader {
         try {
             Registry regManager = LocateRegistry.getRegistry(managerIp, managerPort);
             Manager manager = (Manager) regManager.lookup("manager");
+            
+            // Criar instância do Downloader e registar como listener do Manager
+            Downloader downloader = new Downloader();
+            manager.registerWorkListener(downloader);
+            System.out.println("[Downloader] Registado como listener do Manager para notificacoes de trabalho");
 
             List<String> barrelInfo = manager.getActiveBarrels();
             List<Index> barrels = new ArrayList<>();
@@ -81,8 +106,8 @@ public class Downloader {
                 }
 
                 if (url == null) {
-                    System.out.println("[Downloader] Sem URLs para indexar. A espera...");
-                    Thread.sleep(2000);
+                    System.out.println("[Downloader] Sem URLs para indexar. A aguardar notificacao...");
+                    workAvailable.tryAcquire(2, java.util.concurrent.TimeUnit.SECONDS);
                     continue;
                 }
 
@@ -128,6 +153,8 @@ public class Downloader {
                             for (Index b : barrels) {
                                 try {
                                     b.putNew(absUrl);
+                                    // Liberta semáforo para notificar que há novo trabalho disponível
+                                    workAvailable.release();
                                 } catch (Exception e) {
                                     System.err.println("[Downloader] Falha ao adicionar URL novo: " + e.getMessage());
                                 }
@@ -143,11 +170,10 @@ public class Downloader {
                         }
                     }
 
+
                 } catch (Exception e) {
                     System.err.println("[Downloader] Erro ao processar " + url + ": " + e.getMessage());
                 }
-
-                Thread.sleep(500);
             }
 
         } catch (Exception e) {
@@ -176,6 +202,11 @@ public class Downloader {
             System.err.println("[Downloader] Erro ao obter lista de Barrels: " + e.getMessage());
         }
         return ativos;
+    }
+
+    public static void notifyNewWork() {
+        workAvailable.release();
+        System.out.println("[Downloader] Notificacao: Novo trabalho disponivel!");
     }
 
     private static String limparUrl(String url) {

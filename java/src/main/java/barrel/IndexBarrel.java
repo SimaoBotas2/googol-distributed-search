@@ -13,6 +13,7 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
     private final HashMap<String, List<String>> indexedItems; //palavras
     private final Set<String> visitedUrls; //urls já visitados
     private final Map<String, Set<String>> incomingLinks = new HashMap<>();
+    private volatile Manager manager; // Referência ao Manager para notificar sobre novo trabalho
 
     public static void main(String[] args) {
         // exige argumento 1 ou 2
@@ -53,8 +54,28 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
         super();
         urlsToIndex = new LinkedList<>();
         indexedItems = new HashMap<>();
-        visitedUrls = new LinkedHashSet<>(); 
+        visitedUrls = new LinkedHashSet<>();
+        
+        // Tentar conectar ao Manager para notificações
+        connectToManager();
+        
         System.out.println("[IndexBarrel] Barrel iniciado e pronto para receber pedidos.");
+    }
+    
+    /**
+     * Tenta conectar ao Manager para poder notificá-lo quando há novo trabalho.
+     */
+    private void connectToManager() {
+        try {
+            String managerIp = Config.get("manager.ip");
+            int managerPort = Config.getInt("manager.port", 8182);
+            Registry reg = LocateRegistry.getRegistry(managerIp, managerPort);
+            manager = (Manager) reg.lookup("manager");
+            System.out.println("[IndexBarrel] Conectado ao Manager em " + managerIp + ":" + managerPort);
+        } catch (Exception e) {
+            System.err.println("[IndexBarrel] Aviso: Não consegui conectar ao Manager: " + e.getMessage());
+            manager = null;
+        }
     }
 
     @Override
@@ -94,6 +115,16 @@ public class IndexBarrel extends UnicastRemoteObject implements Index {
 
         urlsToIndex.add(norm);
         System.out.println("[IndexBarrel] putNew -> URL adicionada à fila: " + norm);
+        
+        // Notificar o Manager que há novo trabalho (URL) disponível
+        // O Manager por sua vez notificará o Downloader
+        if (manager != null) {
+            try {
+                manager.notifyNewWorkAvailable();
+            } catch (Exception e) {
+                System.err.println("[IndexBarrel] Aviso: Erro ao notificar Manager: " + e.getMessage());
+            }
+        }
     }
 
     @Override

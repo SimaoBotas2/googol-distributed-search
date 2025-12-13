@@ -11,6 +11,10 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<String> activeBarrels = new ArrayList<>();
+    private final List<Manager.WorkAvailableListener> workListeners = Collections.synchronizedList(new ArrayList<>());
+    
+    // Flag para verificar se há trabalho pendente (para evitar notificações duplicadas)
+    private volatile boolean hasWorkPending = false;
 
     public IndexManager() throws RemoteException {
         super();
@@ -92,7 +96,6 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
                 for (String b : manager.activeBarrels) System.out.println("  -> " + b);
             }
 
-            // -------- iniciar monitorização com base no config --------
             manager.startMonitoring(configuredBarrels);
 
         } catch (RemoteException e) {
@@ -105,6 +108,44 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
     public List<String> getActiveBarrels() throws RemoteException {
         synchronized (activeBarrels) {
             return new ArrayList<>(activeBarrels);
+        }
+    }
+
+    @Override
+    public synchronized void registerWorkListener(Manager.WorkAvailableListener listener) throws RemoteException {
+        workListeners.add(listener);
+        System.out.println("[IndexManager] Downloader registado como listener. Total: " + workListeners.size());
+    }
+
+    @Override
+    public synchronized void unregisterWorkListener(Manager.WorkAvailableListener listener) throws RemoteException {
+        workListeners.remove(listener);
+        System.out.println("[IndexManager] Downloader removido de listeners. Total: " + workListeners.size());
+    }
+
+    @Override
+    public synchronized void notifyNewWorkAvailable() throws RemoteException {
+        // Apenas notificar se ainda não havia trabalho pendente
+        if (!hasWorkPending) {
+            hasWorkPending = true;
+            System.out.println("[IndexManager] Trabalho disponível detectado. Notificando listeners...");
+            
+            for (Manager.WorkAvailableListener listener : new ArrayList<>(workListeners)) {
+                try {
+                    listener.onNewWorkAvailable();
+                } catch (Exception e) {
+                    System.err.println("[IndexManager] Erro ao notificar listener: " + e.getMessage());
+                }
+            }
+        } else {
+            System.out.println("[IndexManager] Trabalho pendente já notificado anteriormente, ignorando notificação duplicada");
+        }
+    }
+    
+    synchronized void markWorkProcessed() {
+        if (hasWorkPending) {
+            hasWorkPending = false;
+            System.out.println("[IndexManager] Trabalho processado. Reset do flag.");
         }
     }
 
@@ -143,6 +184,13 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
                             System.err.println("[Monitor] Barrel caiu em " + addr);
                         }
                     }
+                }
+                
+                // Verifica se há trabalho disponível
+                // Se não houver, reseta o flag para permitir nova notificação
+                boolean hasWork = checkForPendingWork(barrelAddrs);
+                if (!hasWork) {
+                    markWorkProcessed();
                 }
 
                 try { Thread.sleep(5000); } catch (InterruptedException e) { break; }
@@ -187,5 +235,31 @@ public class IndexManager extends UnicastRemoteObject implements Manager {
     //para handling de acesso as threads
     private List<String> getSafeActive() {
         synchronized (activeBarrels) { return new ArrayList<>(activeBarrels); }
+    }
+    
+    /**
+     * Verifica se há URLs pendentes em qualquer barrel.
+     */
+    private boolean checkForPendingWork(List<String> barrelAddrs) {
+        for (String addr : barrelAddrs) {
+            try {
+                String ip = hostOf(addr);
+                int port = portOf(addr);
+                Registry reg = LocateRegistry.getRegistry(ip, port);
+                Index barrel = (Index) reg.lookup("index");
+                
+                // Tenta buscar um URL sem remover (precisa ter este método)
+                // Por enquanto, vamos assumir que se takeNext() retorna algo, há trabalho
+                String url = barrel.takeNext();
+                if (url != null) {
+                    // Se encontrou trabalho, coloca de volta
+                    barrel.putNew(url);
+                    return true;
+                }
+            } catch (Exception ignored) {
+                // Ignore erros de conexão
+            }
+        }
+        return false;
     }
 }
