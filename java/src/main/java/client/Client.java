@@ -17,7 +17,7 @@ public class Client {
     public static void main(String[] args) {
         try {
             // Ler configuração do Config
-            String gatewayHost = Config.get("gateway.host");
+            String gatewayHost = Config.get("gateway.ip");
             int gatewayPort = Config.getInt("gateway.port", 8186);
             
             // Tentativas de ligação à Gateway

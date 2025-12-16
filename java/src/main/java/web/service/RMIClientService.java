@@ -23,7 +23,7 @@ public class RMIClientService {
         gateway = null;
         
         // Ler configuração do Config (com fallback)
-        this.gatewayHost = Config.get("gateway.host");
+        this.gatewayHost = Config.get("gateway.ip");
         if (this.gatewayHost == null || this.gatewayHost.isEmpty()) {
             this.gatewayHost = "localhost";  // Fallback para localhost
             System.out.println("[RMIClientService] gateway.host nao configurado, usando localhost");
