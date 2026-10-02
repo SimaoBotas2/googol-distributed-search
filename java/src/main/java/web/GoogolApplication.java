@@ -9,10 +9,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @ComponentScan({"web", "external_api", "gateway", "client", "common", "barrel", "downloader"})
 @EnableScheduling
-public class GooglelApplication {
+public class GoogolApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(GooglelApplication.class, args);
+        SpringApplication.run(GoogolApplication.class, args);
     }
 
 }
