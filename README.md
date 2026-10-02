@@ -4,8 +4,6 @@ A distributed web search engine written in Java. Downloaders crawl and send page
 
 University project for the *Sistemas Distribuídos* (Distributed Systems) course, Computer Engineering (LEI), University of Coimbra, 2025.
 
-<!-- TODO: add screenshots to docs/screenshots/ (search page, results, real-time statistics) and reference them here -->
-
 ## Features
 
 - Distributed search through a gateway using Java RMI
@@ -45,8 +43,6 @@ flowchart LR
 ### Fault tolerance and replication
 
 Every barrel holds a full replica of the index. The Index Manager keeps checking the barrels defined in `config.properties`; when one becomes available again, it is synchronized from a running barrel (index, visited URLs and pending URLs). The gateway keeps querying the remaining barrels if one fails.
-
-<!-- TODO: describe the failure scenarios you tested and how the system behaves in each -->
 
 ## Tech Stack
 
@@ -113,8 +109,6 @@ java -jar target/googol-1.0-SNAPSHOT.jar
 ```
 
 Open http://localhost:8080. The `run_all.cmd`, `run_maquina1.cmd` and `run_maquina2.cmd` scripts start the same services on Windows, in one or two machines.
-
-<!-- TODO: confirm the startup order and add the commands for a second barrel/downloader -->
 
 ## Authors
 
